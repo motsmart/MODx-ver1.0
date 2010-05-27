@@ -28,6 +28,7 @@ if ($nameExists) $modx->error->addField('name',$modx->lexicon('snippet_err_exist
 if (!empty($scriptProperties['category'])) {
     $category = $modx->getObject('modCategory',array('id' => $scriptProperties['category']));
     if ($category == null) $modx->error->addField('category',$modx->lexicon('category_err_nf'));
+    if (!$category->checkPolicy('add_children')) return $modx->error->failure($modx->lexicon('access_denied'));
 }
 
 if ($modx->error->hasError()) return $modx->error->failure();
@@ -45,7 +46,7 @@ if (is_array($properties)) $snippet->setProperties($properties);
 
 /* invoke OnBeforeSnipFormSave event */
 $modx->invokeEvent('OnBeforeSnipFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_NEW,
     'id' => 0,
     'snippet' => &$snippet,
 ));
@@ -57,7 +58,7 @@ if ($snippet->save() == false) {
 
 /* invoke OnSnipFormSave event */
 $modx->invokeEvent('OnSnipFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_NEW,
     'id' => $snippet->get('id'),
     'snippet' => &$snippet,
 ));

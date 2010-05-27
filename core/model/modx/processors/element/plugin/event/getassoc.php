@@ -24,7 +24,7 @@ if (!empty($name)) {
 if (!empty($event)) {
     $c->innerJoin('modPluginEvent','modPluginEvent','
         `modPluginEvent`.`pluginid` = `modPlugin`.`id`
-    AND `modPluginEvent`.`evtid` = '.$event.'
+    AND `modPluginEvent`.`event` = "'.$event.'"
     ');
     $c->select('
         `modPlugin`.*,
@@ -46,7 +46,7 @@ foreach ($plugins as $plugin) {
     $list[] = array(
         $pluginArray['id'],
         $pluginArray['name'],
-        $pluginArray['priorityy'],
+        $pluginArray['priority'],
         $pluginArray['propertyset'],
         array(),
     );

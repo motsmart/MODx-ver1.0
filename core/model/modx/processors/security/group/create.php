@@ -72,17 +72,4 @@ if (!empty($scriptProperties['resource_groups'])) {
 /* log manager action */
 $modx->logManagerAction('new_user_group','modUserGroup',$usergroup->get('id'));
 
-/* fire events */
-$eventAttributes = array(
-    'usergroup' => &$usergroup,
-);
-switch ($modx->context->get('key')) {
-    case 'web':
-        $modx->invokeEvent('OnWebCreateGroup',$eventAttributes);
-    case 'mgr':
-    default:
-        $modx->invokeEvent('OnManagerCreateGroup',$eventAttributes);
-        break;
-}
-
 return $modx->error->success('',$usergroup);

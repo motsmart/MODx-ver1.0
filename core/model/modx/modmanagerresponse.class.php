@@ -76,6 +76,9 @@ class modManagerResponse extends modResponse {
                         'action' => $this->action,
                         'filename' => $f,
                     ));
+                    if (!empty($this->action['namespace']) && $this->action['namespace'] != 'core') {
+                        $this->modx->smarty->setTemplatePath($this->action['namespace_path']);
+                    }
 
                     $cbody = include $f;
                 } else {
@@ -86,10 +89,7 @@ class modManagerResponse extends modResponse {
                 $this->registerCssJs();
 
                 /* reset path to core modx path for header/footer */
-                if (!isset($this->action['namespace']) || $this->action['namespace'] == 'core') {
-                    $this->modx->smarty->setTemplatePath($templatePath);
-                }
-
+                $this->modx->smarty->setTemplatePath($templatePath);
 
                 /* load header */
                 $controllersPath = $this->modx->getOption('manager_path').'controllers/'.$theme.'/';
@@ -112,7 +112,7 @@ class modManagerResponse extends modResponse {
                     $this->body .= include_once $controllersPath.'footer.php';
                 }
 
-
+                
             } else {
                 $this->body = $this->modx->error->failure($modx->lexicon('action_err_nfs',array(
                     'id' => $action,
@@ -151,14 +151,18 @@ class modManagerResponse extends modResponse {
         $userGroups = $this->modx->user->getUserGroups();
         $c = $this->modx->newQuery('modActionDom');
         $c->leftJoin('modAccessActionDom','Access');
+        $principalCol = $this->modx->getSelectColumns('modAccessActionDom','Access','',array('principal'));
         $c->where(array(
             'action' => $action,
+            'active' => true,
+            array(
+                array(
+                    'Access.principal_class:=' => 'modUserGroup',
+                    $principalCol.' IN ('.implode(',',$userGroups).')',
+                ),
+                'OR:Access.principal:IS' => null,
+            ),
         ));
-        $c->andCondition(array(
-            '((`Access`.`principal_class` = "modUserGroup"
-          AND `Access`.`principal` IN ('.implode(',',$userGroups).'))
-           OR `Access`.`principal` IS NULL)',
-        ),null,2);
         $domRules = $this->modx->getCollection('modActionDom',$c);
         $rules = array();
         foreach ($domRules as $rule) {

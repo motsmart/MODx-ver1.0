@@ -19,6 +19,7 @@ $collection['1']->fromArray(array (
   'description' => 'MODx Resource policy with all attributes.',
   'parent' => 0,
   'class' => '',
+  'lexicon' => 'permissions',
 ), '', true, true);
 $permissions = include dirname(__FILE__).'/permissions/transport.policy.resource.php';
 $collection['1']->addMany($permissions);
@@ -33,8 +34,38 @@ $collection['2']->fromArray(array (
   'description' => 'Context administration policy with all permissions.',
   'parent' => 0,
   'class' => '',
+  'lexicon' => 'permissions',
 ), '', true, true);
 $permissions = include dirname(__FILE__).'/permissions/transport.policy.administrator.php';
 $collection['2']->addMany($permissions);
 $collection['2']->set('data',bld_policyFormatData($permissions));
+unset($permissions);
+
+
+$collection['3']= $xpdo->newObject('modAccessPolicy');
+$collection['3']->fromArray(array (
+  'id' => 3,
+  'name' => 'Load Only',
+  'description' => 'A minimal policy with permission to load an object.',
+  'parent' => 0,
+  'class' => '',
+  'lexicon' => 'permissions',
+), '', true, true);
+$permissions = include dirname(__FILE__).'/permissions/transport.policy.loadonly.php';
+$collection['3']->addMany($permissions);
+$collection['3']->set('data',bld_policyFormatData($permissions));
+unset($permissions);
+
+$collection['4']= $xpdo->newObject('modAccessPolicy');
+$collection['4']->fromArray(array (
+  'id' => 4,
+  'name' => 'Load, List and View',
+  'description' => 'Provides load, list and view permissions only.',
+  'parent' => 0,
+  'class' => '',
+  'lexicon' => 'permissions',
+), '', true, true);
+$permissions = include dirname(__FILE__).'/permissions/transport.policy.loadlistview.php';
+$collection['4']->addMany($permissions);
+$collection['4']->set('data',bld_policyFormatData($permissions));
 unset($permissions);

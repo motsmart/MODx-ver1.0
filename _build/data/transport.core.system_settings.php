@@ -168,6 +168,15 @@ $settings['cache_lexicon_topics']->fromArray(array (
   'area' => 'caching',
   'editedon' => null,
 ), '', true, true);
+$settings['cache_noncore_lexicon_topics']= $xpdo->newObject('modSystemSetting');
+$settings['cache_noncore_lexicon_topics']->fromArray(array (
+  'key' => 'cache_noncore_lexicon_topics',
+  'value' => '1',
+  'xtype' => 'combo-boolean',
+  'namespace' => 'core',
+  'area' => 'caching',
+  'editedon' => null,
+), '', true, true);
 $settings['cache_resource']= $xpdo->newObject('modSystemSetting');
 $settings['cache_resource']->fromArray(array (
   'key' => 'cache_resource',
@@ -584,6 +593,51 @@ $settings['modx_charset']->fromArray(array (
   'area' => 'language',
   'editedon' => null,
 ), '', true, true);
+$settings['proxy_auth_type']= $xpdo->newObject('modSystemSetting');
+$settings['proxy_auth_type']->fromArray(array (
+  'key' => 'proxy_auth_type',
+  'value' => 'BASIC',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'proxy',
+  'editedon' => null,
+), '', true, true);
+$settings['proxy_host']= $xpdo->newObject('modSystemSetting');
+$settings['proxy_host']->fromArray(array (
+  'key' => 'proxy_host',
+  'value' => '',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'proxy',
+  'editedon' => null,
+), '', true, true);
+$settings['proxy_password']= $xpdo->newObject('modSystemSetting');
+$settings['proxy_password']->fromArray(array (
+  'key' => 'proxy_password',
+  'value' => '',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'proxy',
+  'editedon' => null,
+), '', true, true);
+$settings['proxy_port']= $xpdo->newObject('modSystemSetting');
+$settings['proxy_port']->fromArray(array (
+  'key' => 'proxy_port',
+  'value' => '',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'proxy',
+  'editedon' => null,
+), '', true, true);
+$settings['proxy_username']= $xpdo->newObject('modSystemSetting');
+$settings['proxy_username']->fromArray(array (
+  'key' => 'proxy_username',
+  'value' => '',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'proxy',
+  'editedon' => null,
+), '', true, true);
 $settings['password_generated_length']= $xpdo->newObject('modSystemSetting');
 $settings['password_generated_length']->fromArray(array (
   'key' => 'password_generated_length',
@@ -810,6 +864,15 @@ $settings['strip_image_paths']->fromArray(array (
   'area' => 'file',
   'editedon' => null,
 ), '', true, true);
+$settings['tree_root_id']= $xpdo->newObject('modSystemSetting');
+$settings['tree_root_id']->fromArray(array (
+  'key' => 'tree_root_id',
+  'value' => '0',
+  'xtype' => 'numberfield',
+  'namespace' => 'core',
+  'area' => 'manager',
+  'editedon' => null,
+), '', true, true);
 $settings['udperms_allowroot']= $xpdo->newObject('modSystemSetting');
 $settings['udperms_allowroot']->fromArray(array (
   'key' => 'udperms_allowroot',
@@ -950,6 +1013,15 @@ $settings['welcome_screen']->fromArray(array (
   'area' => 'manager',
   'editedon' => null,
 ), '', true, true);
+$settings['welcome_screen_url']= $xpdo->newObject('modSystemSetting');
+$settings['welcome_screen_url']->fromArray(array (
+  'key' => 'welcome_screen_url',
+  'value' => 'http://svn.modxcms.com/docs/display/revolution/Welcome+to+Revolution+2.0',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'manager',
+  'editedon' => null,
+), '', true, true);
 $settings['which_editor']= $xpdo->newObject('modSystemSetting');
 $settings['which_editor']->fromArray(array (
   'key' => 'which_editor',
@@ -959,5 +1031,4 @@ $settings['which_editor']->fromArray(array (
   'area' => 'editor',
   'editedon' => null,
 ), '', true, true);
-
 return $settings;

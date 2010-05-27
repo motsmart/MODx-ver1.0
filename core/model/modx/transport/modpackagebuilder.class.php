@@ -122,7 +122,7 @@ class modPackageBuilder {
     */
     public function createPackage($name, $version, $release = '') {
         /* setup the signature and filename */
-        $s['name'] = $name;
+        $s['name'] = strtolower($name);
         $s['version'] = $version;
         $s['release'] = $release;
         $this->signature = $s['name'];
@@ -139,7 +139,8 @@ class modPackageBuilder {
             unlink($this->directory . $this->filename);
         }
         if (file_exists($this->directory . $this->signature) && is_dir($this->directory . $this->signature)) {
-            if ($cacheManager = $this->modx->getCacheManager()) {
+            $cacheManager = $this->modx->getCacheManager();
+            if ($cacheManager) {
                 $cacheManager->deleteTree($this->directory . $this->signature, true, false, array ());
             }
         }
@@ -315,12 +316,15 @@ class modPackageBuilder {
     }
 
     /**
-     * Build in the lexicon into the package.
+     * Build in the lexicon into the package. Deprecated.
      *
+     * @deprecated
      * @access public
      * @return boolean True if successful
      */
     public function buildLexicon($path) {
+        return false;
+        
         $invdirs = array (
             '.',
             '..',
@@ -394,7 +398,7 @@ class modPackageBuilder {
                             'id' => $i,
                             'name' => $key,
                             'value' => $value,
-                            'topic' => $topic->get('id'),
+                            'topic' => $top,
                             'namespace' => $this->{'namespace'}->get('name'),
                             'language' => $culture,
                         ), '', true, true);

@@ -10,29 +10,34 @@
  * @package modx
  * @subpackage processors.browser.directory
  */
-if (!$modx->hasPermission('file_manager')) return $modx->error->failure($modx->lexicon('permission_denied'));
+if (!$modx->hasPermission('directory_create')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('file');
 
 if (empty($scriptProperties['name'])) return $modx->error->failure($modx->lexicon('file_folder_err_ns'));
 if (empty($scriptProperties['parent'])) $scriptProperties['parent'] = '';
 
+/* get base paths and sanitize incoming paths */
+$modx->getService('fileHandler','modFileHandler');
+$root = $modx->fileHandler->getBasePath();
 
-$d = isset($scriptProperties['prependPath']) && $scriptProperties['prependPath'] != 'null' && $scriptProperties['prependPath'] != null
-    ? $scriptProperties['prependPath']
-    : $modx->getOption('base_path').$modx->getOption('rb_base_dir');
-$parentdir = $d.$scriptProperties['parent'].'/';
-
-if (!is_dir($parentdir)) return $modx->error->failure($modx->lexicon('file_folder_err_parent_invalid'));
-if (!is_readable($parentdir) || !is_writable($parentdir)) {
-	return $modx->error->failure($modx->lexicon('file_folder_err_perms_parent'));
+/* create modDirectory instance for containing directory and validate */
+$parentDirectory = $modx->fileHandler->make($root.$scriptProperties['parent']);
+if (!($parentDirectory instanceof modDirectory)) return $modx->error->failure($modx->lexicon('file_folder_err_parent_invalid'));
+if (!$parentDirectory->isReadable() || !$parentDirectory->isWritable()) {
+    return $modx->error->failure($modx->lexicon('file_folder_err_perms_parent'));
 }
 
-$newdir = $parentdir.'/'.$scriptProperties['name'];
+/* create modDirectory instance for new path, validate doesnt already exist */
+$path = $parentDirectory->getPath().$scriptProperties['name'];
+$directory = $modx->fileHandler->make($path,array(),'modDirectory');
+if ($directory->exists()) return $modx->error->failure($modx->lexicon('file_folder_err_ae'));
 
-if (file_exists($newdir)) return $modx->error->failure($modx->lexicon('file_folder_err_ae'));
-
-if (!@mkdir($newdir,0755)) {
-	return $modx->error->failure($modx->lexicon('file_folder_err_create'));
+/* actually create the directory */
+$result = $directory->create();
+if ($result !== true) {
+    return $modx->error->failure($modx->lexicon('file_folder_err_create').$result);
 }
+
+$modx->logManagerAction('directory_create','',$directory->getPath());
 
 return $modx->error->success();

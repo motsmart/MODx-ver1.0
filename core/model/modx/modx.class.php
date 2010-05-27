@@ -216,7 +216,11 @@ class modX extends xPDO {
      */
     public $db= null;
 
-    public $pluginCache= array ();
+    public $pluginCache= array();
+    public $sourceCache= array(
+        'modChunk' => array()
+        ,'modSnippet' => array()
+    );
 
     /**#@+
      * @deprecated 2006-09-15 To be removed in 2.1
@@ -375,10 +379,12 @@ class modX extends xPDO {
             $this->getConfig();
             $this->_initContext($contextKey);
 
-            if (isset($this->config['extension_packages']) && ($extPackages= explode(',', $this->config['extension_packages']))) {
+            $extPackages = $this->getOption('extension_packages');
+            if (!empty($extPackages)) {
+                $extPackages= explode(',', $extPackages);
                 foreach ($extPackages as $extPackage) {
-                    $exploded= explode(':', $extPackage);
-                    if ($exploded && count($exploded) == 2) {
+                    $exploded= explode(':', $extPackage, 2);
+                    if (!empty($exploded)) {
                         $this->addPackage($exploded[0], $exploded[1]);
                     }
                 }
@@ -414,7 +420,7 @@ class modX extends xPDO {
     public function setDebug($debug= true, $stopOnNotice= false) {
         $oldValue= $this->getDebug();
         if ($debug === true) {
-            error_reporting(E_ALL);
+            error_reporting(-1);
             parent :: setDebug(true);
         } elseif ($debug === false) {
             error_reporting(0);
@@ -444,44 +450,6 @@ class modX extends xPDO {
             }
         }
         return $this->cacheManager;
-    }
-
-    /**
-     * Load and return a named service class instance.
-     *
-     * @param string $name The variable name of the instance.
-     * @param string $class The service class name.
-     * @param string $path An optional root path to search for the class.
-     * @param array $params An array of optional params to pass to the service
-     * class constructor.
-     * @return object The service class instance or null if it could not be loaded.
-     */
-    public function getService($name, $class= '', $path= '', $params= array ()) {
-        $service= null;
-        if (!isset ($this->services[$name]) || !is_object($this->services[$name])) {
-            if (empty ($class) && isset ($this->config[$name . '.class'])) {
-                $class= $this->config[$name . '.class'];
-            } elseif (empty ($class)) {
-                $class= $name;
-            }
-            if ($className= $this->loadClass($class, $path, false, true)) {
-                $service = new $className ($this, $params);
-                if ($service) {
-                    $this->services[$name]=& $service;
-                    $this->$name= & $this->services[$name];
-                }
-            }
-        }
-        if (array_key_exists($name, $this->services)) {
-            $service= & $this->services[$name];
-        } else {
-            if ($this->getDebug() === true) {
-                $this->log(modX::LOG_LEVEL_DEBUG, "Problem getting service {$name}, instance of class {$class}, from path {$path}, with params " . print_r($params, true));
-            } else {
-                $this->log(modX::LOG_LEVEL_ERROR, "Problem getting service {$name}, instance of class {$class}, from path {$path}");
-            }
-        }
-        return $service;
     }
 
     /**
@@ -1511,7 +1479,20 @@ class modX extends xPDO {
      */
     public function runSnippet($snippetName, array $params= array ()) {
         $output= '';
-        if ($snippet= $this->getObject('modSnippet', array ('name' => $snippetName), true)) {
+        if (array_key_exists($snippetName, $this->sourceCache['modSnippet'])) {
+            $snippet = $this->newObject('modSnippet');
+            $snippet->fromArray($this->sourceCache['modSnippet'][$snippetName]['fields'], '', true, true);
+            $snippet->setPolicies($this->sourceCache['modSnippet'][$snippetName]['policies']);
+        } else {
+            $snippet= $this->getObject('modSnippet', array ('name' => $snippetName), true);
+            if (!empty($snippet)) {
+                $this->sourceCache['modSnippet'][$snippetName] = array (
+                    'fields' => $snippet->toArray(),
+                    'policies' => $snippet->getPolicies()
+                );
+            }
+        }
+        if (!empty($snippet)) {
             $snippet->setCacheable(false);
             $output= $snippet->process($params);
         }
@@ -1528,7 +1509,20 @@ class modX extends xPDO {
      */
     public function getChunk($chunkName, array $properties= array ()) {
         $output= '';
-        if ($chunk= $this->getObject('modChunk', array ('name' => $chunkName), true)) {
+        if (array_key_exists($chunkName, $this->sourceCache['modChunk'])) {
+            $chunk = $this->newObject('modChunk');
+            $chunk->fromArray($this->sourceCache['modChunk'][$chunkName]['fields'], '', true, true);
+            $chunk->setPolicies($this->sourceCache['modChunk'][$chunkName]['policies']);
+        } else {
+            $chunk= $this->getObject('modChunk', array ('name' => $chunkName), true);
+            if (!empty($chunk) || $chunk === '0') {
+                $this->sourceCache['modChunk'][$chunkName]= array (
+                    'fields' => $chunk->toArray(),
+                    'policies' => $chunk->getPolicies()
+                );
+            }
+        }
+        if (!empty($chunk) || $chunk === '0') {
             $chunk->setCacheable(false);
             $output= $chunk->process($properties);
         }
@@ -1545,8 +1539,8 @@ class modX extends xPDO {
      * @return string The processed chunk with the placeholders replaced.
      */
     public function parseChunk($chunkName, $chunkArr, $prefix='[[+', $suffix=']]') {
-        $chunk= '';
-        if ($chunk= $this->getChunk($chunkName)) {
+        $chunk= $this->getChunk($chunkName);
+        if (!empty($chunk) || $chunk === '0') {
             if(is_array($chunkArr)) {
                 reset($chunkArr);
                 while (list($key, $value)= each($chunkArr)) {
@@ -2427,6 +2421,14 @@ class modX extends xPDO {
     /**
      * Gets a map of events and registered plugins for the specified context.
      *
+     * Service #s:
+     * 1 - Parser Service Events
+     * 2 - Manager Access Events
+     * 3 - Web Access Service Events
+     * 4 - Cache Service Events
+     * 5 - Template Service Events
+     * 6 - User Defined Events
+     *
      * @param string $contextKey Context identifier.
      * @return array A map of events and registered plugins for each.
      */
@@ -2435,16 +2437,28 @@ class modX extends xPDO {
         if ($contextKey) {
             switch ($contextKey) {
                 case 'mgr':
-                    $service= "ev.`service` IN (1,2,4,5,6) AND";
+                    /* dont load Web Access Service Events */
+                    $service= "`Event`.`service` IN (1,2,4,5,6) AND";
                     break;
                 default:
-                    $service= "ev.`service` IN (1,3,4,5,6) AND (ev.`groupname` = '' OR ev.`groupname` = 'RichText Editor' OR ev.`groupname` = 'modUser') AND";
+                    /* dont load Manager Access Events */
+                    $service= "`Event`.`service` IN (1,3,4,5,6) AND";
             }
-            $eeTbl= $this->getTableName('modPluginEvent');
+            $pluginEventTbl= $this->getTableName('modPluginEvent');
             $eventTbl= $this->getTableName('modEvent');
             $pluginTbl= $this->getTableName('modPlugin');
             $propsetTbl= $this->getTableName('modPropertySet');
-            $sql= "SELECT ev.`name` AS `event`, ee.`pluginid`, ps.`name` AS `propertyset` FROM {$eeTbl} ee INNER JOIN {$pluginTbl} pl ON pl.`id` = ee.`pluginid` AND pl.`disabled` = 0 INNER JOIN {$eventTbl} ev ON {$service} ev.`id` = ee.`evtid` LEFT JOIN {$propsetTbl} ps ON ee.`propertyset` = ps.`id` ORDER BY ev.`name`, ee.`priority` ASC";
+            $sql= "
+                SELECT
+                    `Event`.`name` AS `event`,
+                    `PluginEvent`.`pluginid`,
+                    `PropertySet`.`name` AS `propertyset`
+                FROM {$pluginEventTbl} `PluginEvent`
+                    INNER JOIN {$pluginTbl} `Plugin` ON `Plugin`.`id` = `PluginEvent`.`pluginid` AND `Plugin`.`disabled` = 0
+                    INNER JOIN {$eventTbl} `Event` ON {$service} `Event`.`name` = `PluginEvent`.`event`
+                    LEFT JOIN {$propsetTbl} `PropertySet` ON `PluginEvent`.`propertyset` = `PropertySet`.`id`
+                ORDER BY `Event`.`name`, `PluginEvent`.`priority` ASC
+            ";
             $stmt= $this->prepare($sql);
             if ($stmt && $stmt->execute()) {
                 while ($ee = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -2802,6 +2816,14 @@ class modX extends xPDO {
  * @package modx
  */
 class modSystemEvent {
+    /**
+     * @var const For new creations of objects in model events
+     */
+    const MODE_NEW = 'new';
+    /**
+     * @var const For updating objects in model events
+     */
+    const MODE_UPD = 'upd';
     /**@#+
      * @deprecated 2007-09-18 Will be delegated in 1.0 or sooner.
      * @var string

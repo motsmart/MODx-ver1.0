@@ -12,7 +12,12 @@ MODx.panel.User = function(config) {
         ,id: 'modx-panel-user'
         ,defaults: { collapsible: false ,autoHeight: true }
         ,bodyStyle: ''
-        ,items: {
+        ,items: [{
+             html: '<h2>'+_('user_new')+'</h2>'
+            ,border: false
+            ,cls: 'modx-page-header'
+            ,id: 'modx-user-header'
+        },{
             xtype: 'modx-tabs'
             ,deferredRender: false
             ,border: true
@@ -20,10 +25,10 @@ MODx.panel.User = function(config) {
                 autoHeight: true
                 ,layout: 'form'
                 ,labelWidth: 150
-                ,bodyStyle: 'padding: 1.5em;'
+                ,bodyStyle: 'padding: 15px;'
             }
             ,items: this.getFields(config)
-        }
+        }]
         ,useLoadingMask: true
         ,listeners: {
             'setup': {fn:this.setup,scope:this}
@@ -58,7 +63,7 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
                         var s = g.getStore();
                         if (s) { s.loadData(d); }
                     }
-                    
+                    Ext.get('modx-user-header').update('<h2>'+_('user')+': '+r.object.username+'</h2>');
                     this.fireEvent('ready',r.object);
                 },scope:this}
             }
@@ -71,11 +76,15 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
         
         var h = Ext.getCmp('modx-grid-user-groups');
         if (h) { d.groups = h.encode(); }
+
+        var t = Ext.getCmp('modx-orm-tree');
+        if (t) { d.remote_data = t.encode(); }
         
         Ext.apply(o.form.baseParams,d);
     }
     
     ,success: function(o) {
+        var userId = this.config.user;
         if (Ext.getCmp('modx-user-passwordnotifymethod-s').getValue() === true && o.result.message != '') {
             Ext.Msg.hide();
             Ext.Msg.show({
@@ -83,14 +92,14 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
                 ,msg: o.result.message
                 ,buttons: Ext.Msg.OK
                 ,fn: function(btn) {
-                    if (btn == 'ok') { 
-                        location.href = '?a='+MODx.action['security/user/update']+'&id='+o.result.object.id; 
+                    if (userId == 0) {
+                        location.href = '?a='+MODx.action['security/user']+'&id='+o.result.object.id;
                     }
                     return false;
                 }
             });
-        } else if (this.config.user == 0) {            
-            location.href = '?a='+MODx.action['security/user/update']+'&id='+o.result.object.id;
+        } else if (userId == 0) {
+            location.href = '?a='+MODx.action['security/user']+'&id='+o.result.object.id;
         }
     }
     
@@ -203,6 +212,7 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
                     ,name: 'username'
                     ,fieldLabel: _('username')
                     ,xtype: 'textfield'
+                    ,width: 300
                 },{
                     id: 'modx-user-active'
                     ,name: 'active'
@@ -296,6 +306,7 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
                 },{
                     id: 'modx-user-gender'
                     ,name: 'gender'
+                    ,hiddenName: 'gender'
                     ,fieldLabel: _('user_gender')
                     ,xtype: 'modx-combo-gender'
                 },{
@@ -376,7 +387,7 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
         f.push({
             title: _('access_permissions')
             ,layout: 'form'
-            ,bodyStyle: 'padding: 1.5em;'
+            ,bodyStyle: 'padding: 15px;'
             ,defaults: { border: false ,autoHeight: true }
             ,hideMode: 'offsets'
             ,items: [{
@@ -394,13 +405,43 @@ Ext.extend(MODx.panel.User,MODx.FormPanel,{
                 }
             }]
         });
+        if (config.remoteFields && config.remoteFields.length) {
+            f.push({
+                title: _('remote_data')
+                ,layout: 'form'
+                ,bodyStyle: 'padding: 15px;'
+                ,defaults: { border: false ,autoHeight: true }
+                ,hideMode: 'offsets'
+                ,items: [{
+                    html: '<p>'+_('user_remote_data_msg')+'</p>'
+                },{
+                    layout: 'column'
+                    ,items: [{
+                        columnWidth: 0.4
+                        ,title: _('attributes')
+                        ,layout: 'fit'
+                        ,border: false
+                        ,items: {
+                            xtype: 'modx-orm-tree'
+                            ,id: 'modx-orm-tree'
+                            ,data: config.remoteFields
+                            ,formPanel: 'modx-panel-user'
+                        }
+                    },{
+                        xtype: 'modx-orm-form'
+                        ,columnWidth: 0.6
+                        ,title: _('editing_form')
+                        ,id: 'modx-orm-form'
+                        ,treePanel: 'modx-orm-tree'
+                        ,formPanel: 'modx-panel-user'
+                    }]
+                }]
+            });
+        }
         return f;
     }
 });
 Ext.reg('modx-panel-user',MODx.panel.User);
-
-
-
 
 /**
  * Displays a gender combo

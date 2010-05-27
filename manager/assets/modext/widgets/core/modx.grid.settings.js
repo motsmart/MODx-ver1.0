@@ -2,14 +2,15 @@ MODx.grid.SettingsGrid = function(config) {
     config = config || {};
     this.exp = new Ext.grid.RowExpander({
         tpl : new Ext.Template(
-            '<p style="padding: .7em 1em .3em;"><i>{description}</i></p>'
+            '<p class="desc">{description}</p>'
         )
     });
+
     if (!config.tbar) {
         config.tbar = [{
             text: _('setting_create')
             ,scope: this
-            ,handler: { 
+            ,handler: {
                 xtype: 'modx-window-setting-create'
                 ,url: config.url || MODx.config.connectors_url+'system/settings.php'
                 ,blankValues: true
@@ -44,7 +45,7 @@ MODx.grid.SettingsGrid = function(config) {
             ,'render': {fn: function(cmp) {
                 new Ext.KeyMap(cmp.getEl(), {
                     key: Ext.EventObject.ENTER
-                    ,fn: function() { 
+                    ,fn: function() {
                         this.fireEvent('change',this.getValue());
                         this.blur();
                         return true; }
@@ -57,187 +58,79 @@ MODx.grid.SettingsGrid = function(config) {
         ,id: 'modx-filter-clear'
         ,text: _('filter_clear')
         ,listeners: {
-        	'click': {fn: this.clearFilter, scope: this}
+            'click': {fn: this.clearFilter, scope: this}
         }
     });
+
+    this.cm = new Ext.grid.ColumnModel({
+        columns: [this.exp,{
+            header: _('name')
+            ,dataIndex: 'name'
+            ,sortable: true
+            ,editor: { xtype: 'textfield' }
+            ,width: 150
+        },{
+            header: _('key')
+            ,dataIndex: 'key'
+            ,sortable: true
+            ,editable: false
+            ,width: 125
+        },{
+            header: _('value')
+            ,dataIndex: 'value'
+            ,sortable: true
+            ,editable: true
+            ,renderer: this.renderDynField.createDelegate(this,[this],true)
+            ,width: 260
+        },{
+            header: _('last_modified')
+            ,dataIndex: 'editedon'
+            ,sortable: true
+            ,editable: false
+            ,width: 125
+        },{
+            header: _('area')
+            ,dataIndex: 'area_text'
+            ,sortable: true
+            ,hidden: true
+            ,editable: false
+        }]
+        /* Editors are pushed here. I think that they should be in general grid
+         * definitions (modx.grid.js) and activated via a config property (loadEditor: true) */
+        ,getCellEditor: function(colIndex, rowIndex) {
+            var field = this.getDataIndex(colIndex);
+            if (field == 'value') {
+                var rec = config.store.getAt(rowIndex);
+                var o = MODx.load({ xtype: rec ? (rec.get('xtype') || 'textfield') : 'textfield'});
+                return new Ext.grid.GridEditor(o);
+            }
+            return Ext.grid.ColumnModel.prototype.getCellEditor.call(this, colIndex, rowIndex);
+        }
+    });
+
     Ext.applyIf(config,{
-        title: _('settings')
-        ,url: MODx.config.connectors_url+'system/settings.php'
-        ,baseParams: {
-            action: 'getList'
-        }
+         cm: this.cm
         ,fields: ['key','name','value','description','xtype','namespace','area','area_text','editedon','oldkey','menu']
-        ,paging: true
-        ,pageSize: 50
-        ,autosave: true
-        ,remoteSort: true
-        ,primaryKey: 'key'
-        ,viewConfig: { 
-            forceFit: true
-            ,autoFill: true
-            ,showPreview: true
-            ,enableRowBody: true
-            ,scrollOffset: 0
-            ,emptyText: config.emptyText || _('ext_emptymsg')
-        }
+        ,clicksToEdit: 2
         ,grouping: true
         ,groupBy: 'area_text'
         ,singleText: _('setting')
         ,pluralText: _('settings')
         ,plugins: this.exp
-        ,columns: [this.exp,{
-            header: _('name')
-            ,dataIndex: 'name'
-            ,width: 250
-            ,editor: { xtype: 'textfield' }
-        },{
-            header: _('value')
-            ,id: 'value'
-            ,dataIndex: 'value'
-            ,width: 150
-            ,renderer: this.renderDynField.createDelegate(this,[this],true)
-        },{
-            header: _('key')
-            ,dataIndex: 'key'
-            ,width: 100
-            ,sortable: true
-        },{
-            header: _('area')
-            ,dataIndex: 'area_text'
-            ,width: 100
-            ,sortable: true
-            ,hidden: true
-        },{
-            header: _('last_modified')
-            ,dataIndex: 'editedon'
-            ,width: 100
-            ,sortable: true
-        }]
-        ,collapseFirst: false
-        ,tools: [{
-            id: 'plus'
-            ,qtip: _('expand_all')
-            ,handler: this.expandAll
-            ,scope: this
-        },{
-            id: 'minus'
-            ,hidden: true
-            ,qtip: _('collapse_all')
-            ,handler: this.collapseAll
-            ,scope: this
-        }]
+        ,primaryKey: 'key'
+        ,autosave: true
+        ,pageSize: 30
+        ,paging: true
     });
+
+    this.view = new Ext.grid.GroupingView({
+        emptyText: config.emptyText || _('ext_emptymsg')
+    });
+
     MODx.grid.SettingsGrid.superclass.constructor.call(this,config);
-    this.removeListener('celldblclick',this.onCellDblClick,this);
-    this.on('celldblclick',this.changeEditor,this);
 };
 Ext.extend(MODx.grid.SettingsGrid,MODx.grid.Grid,{
-    _addEnterKeyHandler: function() {
-        this.getEl().addKeyListener(Ext.EventObject.ENTER,function() {
-            this.fireEvent('change'); 
-        },this);
-    }
-  
-    ,clearFilter: function() {
-    	this.getStore().baseParams = {
-    		action: 'getList'
-    	};
-        Ext.getCmp('modx-filter-namespace').reset();
-        var acb = Ext.getCmp('modx-filter-area');
-        if (acb) {
-            acb.store.baseParams['namespace'] = '';
-            acb.reset();
-        }
-        Ext.getCmp('modx-filter-key').reset();
-    	this.getBottomToolbar().changePage(1);
-    	this.refresh();
-    }
-    
-    ,filterByKey: function(tf,newValue,oldValue) {
-        var nv = newValue || tf;
-        this.getStore().baseParams.key = nv;
-        this.getBottomToolbar().changePage(1);
-        this.refresh();
-        return true;
-    }
-    
-    ,filterByNamespace: function(cb,rec,ri) {
-        this.getStore().baseParams['namespace'] = rec.data['name'];
-        this.getStore().baseParams['area'] = '';
-        this.getBottomToolbar().changePage(1);
-        this.refresh();
-        
-        var acb = Ext.getCmp('modx-filter-area');
-        if (acb) {
-            var s = acb.store;
-            s.baseParams['namespace'] = rec.data.name;
-            s.removeAll();
-            s.reload();
-            acb.setValue('');
-        }        
-    }
-    
-    ,filterByArea: function(cb,rec,ri) {
-        this.getStore().baseParams['area'] = rec.data['v'];
-        this.getBottomToolbar().changePage(1);
-        this.refresh();
-    }
-    
-    ,changeEditor: function(g,ri,ci,e) {
-        var cm = this.getColumnModel();
-        if (cm.getColumnId(ci) != 'value') {
-            this.onCellDblClick(g,ri,ci,e);
-        } else {
-            e.preventDefault();
-            var r = this.getStore().getAt(ri).data;
-            this.initEditor(cm,ci,ri,r);
-            this.startEditing(ri,ci);
-        }
-    }
-    
-    ,initEditor: function(cm,ci,ri,r) {
-        cm.setEditable(ci,true);
-        var o = Ext.ComponentMgr.create({ xtype: r.xtype || 'textfield'});
-        var ed = new Ext.grid.GridEditor(o);
-        cm.setEditor(ci,ed);
-    }
-    
-    ,startEditing : function(row, col){
-        this.stopEditing();
-        if(this.colModel.isCellEditable(col, row)){
-            this.view.ensureVisible(row, col, true);
-            var r = this.store.getAt(row);
-            var field = this.colModel.getDataIndex(col);
-            var e = {
-                grid: this,
-                record: r,
-                field: field,
-                value: r.data[field],
-                row: row,
-                column: col,
-                cancel:false
-            };
-            if(this.fireEvent("beforeedit", e) !== false && !e.cancel){
-                this.editing = true;
-                var ed = this.colModel.getCellEditor(col, row);
-                if(!ed.rendered){
-                    ed.render(this.view.getEditorParent(ed));
-                }
-                (function(){ /* complex but required for focus issues in safari, ie and opera */
-                    ed.row = row;
-                    ed.col = col;
-                    ed.record = r;
-                    ed.on("complete", this.onEditComplete, this);
-                    ed.on("specialkey", this.selModel.onEditorKey, this.selModel);
-                    this.activeEditor = ed;
-                    var v = this.preEditValue(r, field);
-                    ed.startEdit(this.view.getCell(row, col).firstChild, v);
-                }).defer(50, this);
-            }
-        }
-    }
-    
-    ,renderDynField: function(v,md,rec,ri,ci,s,g) {
+    renderDynField: function(v,md,rec,ri,ci,s,g) {
         var r = s.getAt(ri).data;
         var f;
         if (r.xtype == 'combo-boolean') {
@@ -259,8 +152,71 @@ Ext.extend(MODx.grid.SettingsGrid,MODx.grid.Grid,{
         }
         return v;
     }
+
+    ,clearFilter: function() {
+    	this.getStore().baseParams = {
+            action: 'getList'
+    	};
+        Ext.getCmp('modx-filter-namespace').reset();
+        var acb = Ext.getCmp('modx-filter-area');
+        if (acb) {
+            acb.store.baseParams['namespace'] = '';
+            acb.store.load();
+            acb.reset();
+        }
+        Ext.getCmp('modx-filter-key').reset();
+    	this.getBottomToolbar().changePage(1);
+    }
+    ,filterByKey: function(tf,newValue,oldValue) {
+        var nv = newValue || tf;
+        this.getStore().baseParams.key = nv;
+        this.getBottomToolbar().changePage(1);
+        return true;
+    }
+
+    ,filterByNamespace: function(cb,rec,ri) {
+        this.getStore().baseParams['namespace'] = rec.data['name'];
+        this.getStore().baseParams['area'] = '';
+        this.getBottomToolbar().changePage(1);
+
+        var acb = Ext.getCmp('modx-filter-area');
+        if (acb) {
+            var s = acb.store;
+            s.baseParams['namespace'] = rec.data.name;
+            s.removeAll();
+            s.reload();
+            acb.setValue('');
+        }
+    }
+
+    ,filterByArea: function(cb,rec,ri) {
+        this.getStore().baseParams['area'] = rec.data['v'];
+        this.getBottomToolbar().changePage(1);
+    }
+
 });
 Ext.reg('modx-grid-settings',MODx.grid.SettingsGrid);
+
+
+MODx.combo.Area = function(config) {
+    config = config || {};
+    Ext.applyIf(config,{
+        name: 'area'
+        ,hiddenName: 'area'
+        ,displayField: 'd'
+        ,valueField: 'v'
+        ,fields: ['d','v']
+        ,url: MODx.config.connectors_url+'system/settings.php'
+        ,pageSize: 20
+        ,baseParams: {
+            action: 'getAreas'
+        }
+    });
+    MODx.combo.Area.superclass.constructor.call(this,config);
+};
+Ext.extend(MODx.combo.Area,MODx.combo.ComboBox);
+Ext.reg('modx-combo-area',MODx.combo.Area);
+
 
 MODx.window.CreateSetting = function(config) {
     config = config || {};
@@ -327,7 +283,6 @@ MODx.window.CreateSetting = function(config) {
 };
 Ext.extend(MODx.window.CreateSetting,MODx.Window);
 Ext.reg('modx-window-setting-create',MODx.window.CreateSetting);
-
 
 
 MODx.combo.xType = function(config) {
@@ -415,23 +370,3 @@ MODx.window.UpdateSetting = function(config) {
 };
 Ext.extend(MODx.window.UpdateSetting,MODx.Window);
 Ext.reg('modx-window-setting-update',MODx.window.UpdateSetting);
-
-
-
-MODx.combo.Area = function(config) {
-    config = config || {};
-    Ext.applyIf(config,{
-        name: 'area'
-        ,hiddenName: 'area'
-        ,displayField: 'd'
-        ,valueField: 'v'
-        ,fields: ['d','v']
-        ,url: MODx.config.connectors_url+'system/settings.php'
-        ,baseParams: {
-            action: 'getAreas'
-        }
-    });
-    MODx.combo.Area.superclass.constructor.call(this,config);
-};
-Ext.extend(MODx.combo.Area,MODx.combo.ComboBox);
-Ext.reg('modx-combo-area',MODx.combo.Area);

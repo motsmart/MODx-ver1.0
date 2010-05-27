@@ -7,61 +7,141 @@
  * @xtype modx-tree-directory
  */
 MODx.tree.Directory = function(config) {
-	config = config || {};
-	Ext.applyIf(config,{
-		rootVisible: false
-		,root_id: 'root'
-		,root_name: _('files')
-		,title: _('files')
-		,ddAppendOnly: true
+    config = config || {};
+    Ext.applyIf(config,{
+        rootVisible: false
+        ,root_id: 'root'
+        ,title: _('files')
+        ,ddAppendOnly: true
         ,enableDrag: true
         ,enableDrop: true
         ,ddGroup: 'modx-treedrop-dd'
-		,url: MODx.config.connectors_url+'browser/directory.php'
-		,baseParams: {
-			prependPath: config.prependPath || null
-			,hideFiles: config.hideFiles || false
-		}
-		,action: 'getList'
+        ,url: MODx.config.connectors_url+'browser/directory.php'
+        ,baseParams: {
+            prependPath: config.prependPath || null
+            ,hideFiles: config.hideFiles || false
+        }
+        ,action: 'getList'
         ,primaryKey: 'dir'
-	});
-	MODx.tree.Directory.superclass.constructor.call(this,config);
+        ,useDefaultToolbar: true
+        ,tbar: [{
+            text: _('upload_files')
+            ,handler: this.uploadFiles
+            ,scope: this
+        }]
+    });
+    MODx.tree.Directory.superclass.constructor.call(this,config);
     this.addEvents({
         'beforeUpload': true
         ,'afterUpload': true
     });
 };
 Ext.extend(MODx.tree.Directory,MODx.tree.Tree,{
-	windows: {}
-    ,_handleDrop: function(e) { return false; }
-    ,_showContextMenu: function(node,e) {
-        node.select();
-        this.cm.activeNode = node;
-        
-        var m = this.cm;
-        var nar = node.id.split('_');
-        
-        m.removeAll();
-        if (node.attributes.menu) {
-            this.addContextMenuItem(node.attributes.menu.items);
-        }
-        if (node.attributes.type == 'dir') {
-            m.add('-');
-            m.add({
-                text: _('directory_refresh')
-                ,scope: this
-                ,handler: this.refreshActiveNode
-            });
-            m.add('-');
-            m.add({
-                text: _('upload_files')
-                ,scope: this
-                ,handler: this.uploadFiles
-            })
-        }
-        m.show(node.ui.getEl(),'t?');
-        m.activeNode = node;
+    windows: {}
+    ,_initExpand: function() {
+        var treeState = Ext.state.Manager.get(this.treestate_id);
+        this.expandPath(treeState,'text');
     }
+    ,_saveState: function(n) {
+        var p = n.getPath('text');
+        Ext.state.Manager.set(this.treestate_id,p);
+    }
+    ,_handleDrop: function(e) { return false; }
+    ,_showContextMenu: function(n,e) {
+        n.select();
+        this.cm.activeNode = n;
+        this.cm.removeAll();
+        if (n.attributes.menu && n.attributes.menu.items) {
+            this.addContextMenuItem(n.attributes.menu.items);
+            this.cm.show(n.getUI().getEl(),'t?');
+        } else {
+            var m = [];
+            switch (n.attributes.type) {
+                case 'dir':
+                    m = this._getDirectoryMenu(n);
+                    break;
+                default:
+                    m = this._getFileMenu(n);
+                    break;
+            }
+
+            this.addContextMenuItem(m);
+            this.cm.show(n.getUI().getEl(),'t?');
+        }
+        e.stopEvent();
+    }
+
+    ,_getFileMenu: function(n) {
+        var a = n.attributes;
+        var ui = n.getUI();
+        var m = [];
+
+        if (ui.hasClass('pupdate')) {
+            m.push({
+                text: _('file_edit')
+                ,file: a.file
+                ,handler: function(itm,e) {
+                    this.loadAction('a='+MODx.action['system/file/edit']+'&file='+itm.file);
+                }
+            });
+            m.push({
+                text: _('rename')
+                ,handler: this.renameFile
+            });
+        }
+        if (ui.hasClass('premove')) {
+            if (m.length > 0) { m.push('-'); }
+            m.push({
+                text: _('file_remove')
+                ,handler: this.removeFile
+            });
+        }
+        return m;
+    }
+
+    ,_getDirectoryMenu: function(n) {
+        var ui = n.getUI();
+        var m = [];
+        if (ui.hasClass('pcreate')) {
+            m.push({
+                text: _('file_folder_create_here')
+                ,handler: this.createDirectory
+            });
+        }
+        if (ui.hasClass('pchmod')) {
+            m.push({
+                text: _('file_folder_chmod')
+                ,handler: this.chmodDirectory
+            });
+        }
+        if (ui.hasClass('pupdate')) {
+            m.push({
+                text: _('rename')
+                ,handler: this.renameFile
+            });
+        }
+        m.push({
+            text: _('directory_refresh')
+            ,handler: this.refreshActiveNode
+        });
+        if (ui.hasClass('pupload')) {
+            m.push('-');
+            m.push({
+                text: _('upload_files')
+                ,handler: this.uploadFiles
+            });
+        }
+        if (ui.hasClass('premove')) {
+            m.push('-');
+            m.push({
+                text: _('file_folder_remove')
+                ,handler: this.removeDirectory
+            });
+        }
+        return m;
+    }
+
+    
     ,getPath:function(node) {
         var path, p, a;
 
@@ -86,24 +166,23 @@ Ext.extend(MODx.tree.Directory,MODx.tree.Tree,{
         // full path security checking has to be implemented on server
         path = path.replace(/^[\/\.]*/, '');
         return path+'/';
-    } // eo function getPath
-    
+    }
     
     ,renameNode: function(field,nv,ov) {
-		MODx.Ajax.request({
-		    url: MODx.config.connectors_url+'browser/index.php'
-		    ,params: {
-		  	    action: 'rename'
-		  	    ,new_name: nv
-		  	    ,old_name: ov
+        MODx.Ajax.request({
+            url: MODx.config.connectors_url+'browser/index.php'
+            ,params: {
+                action: 'rename'
+                ,new_name: nv
+                ,old_name: ov
                 ,prependPath: this.config.prependPath || null
-		  	    ,file: this.treeEditor.editNode.id
-		    }
-		    ,listeners: {
-		    	'success': {fn:this.refresh,scope:this}
-		    }
-		});
-	}
+                ,file: this.treeEditor.editNode.id
+            }
+            ,listeners: {
+               'success': {fn:this.refresh,scope:this}
+            }
+        });
+    }
 	
     ,renameFile: function(item,e) {
         var node = this.cm.activeNode;
@@ -125,43 +204,58 @@ Ext.extend(MODx.tree.Directory,MODx.tree.Tree,{
         this.windows.rename.setValues(r);
         this.windows.rename.show(e.target);
     }
-	,createDirectory: function(item,e) {
-		var node = this.cm.activeNode;
+    
+    ,createDirectory: function(item,e) {
+        var node = this.cm.activeNode;
         var r = {parent: node.id};
         if (!this.windows.create) {
-    		this.windows.create = MODx.load({
-    			xtype: 'modx-window-directory-create'
-    			,record: r
+            this.windows.create = MODx.load({
+                xtype: 'modx-window-directory-create'
+                ,record: r
                 ,prependPath: this.config.prependPath || null
                 ,listeners: {
                     'success':{fn:this.refresh,scope:this}
                 }
-    		});
-        } else {
-            this.windows.create.setValues(r);
+            });
         }
-		this.windows.create.show(e.target);
-	}
+        this.windows.create.setValues(r);
+        this.windows.create.show(e.target);
+    }
 	
-	,chmodDirectory: function(item,e) {
-		var node = this.cm.activeNode;
+    ,chmodDirectory: function(item,e) {
+        var node = this.cm.activeNode;
         var r = {dir: node.id,mode: node.attributes.perms};
         if (!this.windows.chmod) {
             this.windows.chmod = MODx.load({
-    			xtype: 'modx-window-directory-chmod'
-    			,record: r
+                xtype: 'modx-window-directory-chmod'
+                ,record: r
                 ,prependPath: this.config.prependPath || null
                 ,listeners: {
                     'success':{fn:this.refresh,scope:this}
                 }
-    		});
-        } else {
-            this.windows.chmod.setValues(r);
+            });
         }
-		this.windows.chmod.show(e.target);
-	}
-    
-	,removeFile: function(item,e) {
+        this.windows.chmod.setValues(r);
+        this.windows.chmod.show(e.target);
+    }
+
+    ,removeDirectory: function(item,e) {
+        var node = this.cm.activeNode;
+        MODx.msg.confirm({
+            text: _('file_folder_remove_confirm')
+            ,url: MODx.config.connectors_url+'browser/directory.php'
+            ,params: {
+                action: 'remove'
+                ,dir: node.id
+                ,prependPath: this.config.prependPath || null
+            }
+            ,listeners: {
+                'success':{fn:this.refreshParentNode,scope:this}
+            }
+        });
+    }
+
+    ,removeFile: function(item,e) {
         var node = this.cm.activeNode;
         MODx.msg.confirm({
             text: _('file_confirm_remove')
@@ -192,30 +286,38 @@ Ext.extend(MODx.tree.Directory,MODx.tree.Tree,{
             });
             this.uploader.on('show',this.beforeUpload,this);
             this.uploader.on('uploadsuccess',this.uploadSuccess,this);
-            
         }
         this.uploader.show(btn);
     }
     
     ,uploadSuccess:function() {
-        var node = this.cm.activeNode;
-        (node.isLeaf() ? node.parentNode : node).reload();
-        this.fireEvent('afterUpload',node);
+        if (this.cm.activeNode) {
+            var node = this.cm.activeNode;
+            (node.isLeaf() ? node.parentNode : node).reload();
+            this.fireEvent('afterUpload',node);
+        } else {
+            this.refresh();
+        }
     }    
     ,beforeUpload: function() {
-        var node = this.cm.activeNode;
-        var path = this.getPath(node);
-        if(node.isLeaf()) {
-            path = path.replace(/\/[^\/]+$/, '', path);
-        }
+        var path;
+        if (this.cm.activeNode) {
+            path = this.getPath(this.cm.activeNode);
+            if(this.cm.activeNode.isLeaf()) {
+               path = path.replace(/\/[^\/]+$/, '', path);
+            }
+        } else { path = '/'; }
+
         this.uploader.setBaseParams({
             action: 'upload'
             ,prependPath: this.config.prependPath || null
             ,prependUrl: this.config.prependUrl || null
             ,path: path
         });
-        this.fireEvent('beforeUpload',node);
+        this.fireEvent('beforeUpload',this.cm.activeNode);
     }
+
+
     
 });
 Ext.reg('modx-tree-directory',MODx.tree.Directory);
@@ -230,10 +332,10 @@ Ext.reg('modx-tree-directory',MODx.tree.Directory);
  */
 MODx.window.CreateDirectory = function(config) {
     config = config || {};
-	Ext.applyIf(config,{
-		width: 430
-		,height: 200
-		,title: _('file_folder_create')
+    Ext.applyIf(config,{
+        width: 430
+        ,height: 200
+        ,title: _('file_folder_create')
         ,url: MODx.config.connectors_url+'browser/directory.php'
         ,action: 'create'
         ,fields: [{
@@ -252,8 +354,8 @@ MODx.window.CreateDirectory = function(config) {
             ,xtype: 'textfield'
             ,width: 200
         }]
-	});
-	MODx.window.CreateDirectory.superclass.constructor.call(this,config);
+    });
+    MODx.window.CreateDirectory.superclass.constructor.call(this,config);
 };
 Ext.extend(MODx.window.CreateDirectory,MODx.Window);
 Ext.reg('modx-window-directory-create',MODx.window.CreateDirectory);
@@ -268,10 +370,10 @@ Ext.reg('modx-window-directory-create',MODx.window.CreateDirectory);
  */
 MODx.window.ChmodDirectory = function(config) {
     config = config || {};
-	Ext.applyIf(config,{
-		title: _('file_folder_chmod')
+    Ext.applyIf(config,{
+        title: _('file_folder_chmod')
         ,width: 430
-		,height: 200
+        ,height: 200
         ,url: MODx.config.connectors_url+'browser/directory.php'
         ,action: 'chmod'
         ,fields: [{
@@ -289,8 +391,8 @@ MODx.window.ChmodDirectory = function(config) {
             ,xtype: 'hidden'
             ,width: 200
         }]
-	});
-	MODx.window.ChmodDirectory.superclass.constructor.call(this,config);
+    });
+    MODx.window.ChmodDirectory.superclass.constructor.call(this,config);
 };
 Ext.extend(MODx.window.ChmodDirectory,MODx.Window);
 Ext.reg('modx-window-directory-chmod',MODx.window.ChmodDirectory);
@@ -313,6 +415,7 @@ MODx.window.RenameFile = function(config) {
             ,name: 'path'
             ,xtype: 'statictextfield'
             ,submitValue: true
+            ,width: 400
         },{
             fieldLabel: _('old_name')
             ,name: 'oldname'

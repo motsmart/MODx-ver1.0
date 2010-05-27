@@ -60,46 +60,118 @@ class modPropertySet extends xPDOSimpleObject {
      */
     public function setProperties($properties, $merge = false) {
         $set = false;
-        $propertyArray = array();
+        $propertiesArray = array();
         if (is_string($properties)) {
             $properties = $this->xpdo->parser->parsePropertyString($properties);
         }
         if (is_array($properties)) {
             foreach ($properties as $propKey => $property) {
                 if (is_array($property) && isset($property[5])) {
-                    $propertyArray[$property[0]] = array(
+                    $key = $property[0];
+                    $propertyArray = array(
                         'name' => $property[0],
                         'desc' => $property[1],
                         'type' => $property[2],
                         'options' => $property[3],
                         'value' => $property[4],
+                        'lexicon' => !empty($property[5]) ? $property[5] : null,
                     );
                 } elseif (is_array($property) && isset($property['value'])) {
-                    $propertyArray[$property['name']] = array(
+                    $key = $property['name'];
+                    $propertyArray = array(
                         'name' => $property['name'],
                         'desc' => isset($property['description']) ? $property['description'] : (isset($property['desc']) ? $property['desc'] : ''),
                         'type' => isset($property['xtype']) ? $property['xtype'] : (isset($property['type']) ? $property['type'] : 'textfield'),
                         'options' => isset($property['options']) ? $property['options'] : array(),
                         'value' => $property['value'],
+                        'lexicon' => !empty($property['lexicon']) ? $property['lexicon'] : null,
                     );
                 } else {
-                    $propertyArray[$propKey] = array(
+                    $key = $propKey;
+                    $propertyArray = array(
                         'name' => $propKey,
                         'desc' => '',
                         'type' => 'textfield',
                         'options' => array(),
-                        'value' => $property
+                        'value' => $property,
+                        'lexicon' => null,
                     );
                 }
+                /* handle translations of properties (temp fix until modLocalizableObject in 2.1 and beyond) */
+                if (!empty($propertyArray['lexicon'])) {
+                    $this->xpdo->lexicon->load($propertyArray['lexicon']);
+                    $propertyArray['desc'] = $this->xpdo->lexicon($propertyArray['desc']);
+
+                    if (is_array($propertyArray['options'])) {
+                        foreach ($propertyArray['options'] as $optionKey => &$option) {
+                            if (!empty($option['text'])) {
+                                $option['text'] = $this->xpdo->lexicon($option['text']);
+                            }
+                        }
+                    }
+                }
+                $propertiesArray[$key] = $propertyArray;
             }
-            if ($merge && !empty($propertyArray)) {
+            if ($merge && !empty($propertiesArray)) {
                 $existing = $this->get('properties');
                 if (is_array($existing) && !empty($existing)) {
-                    $propertyArray = array_merge($existing, $propertyArray);
+                    $propertyArray = array_merge($existing, $propertiesArray);
                 }
             }
-            $set = $this->set('properties', $propertyArray);
+            $set = $this->set('properties', $propertiesArray);
         }
         return $set;
+    }
+
+
+    /**
+     * Overrides xPDOObject::save to fire modX-specific events.
+     *
+     * {@inheritDoc}
+     */
+    public function save($cacheFlag = null) {
+        $isNew = $this->isNew();
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnPropertySetBeforeSave',array(
+                'mode' => $isNew ? modSystemEvent::MODE_NEW : modSystemEvent::MODE_UPD,
+                'propertySet' => &$this,
+                'cacheFlag' => $cacheFlag,
+            ));
+        }
+
+        $saved = parent :: save($cacheFlag);
+
+        if ($saved && $this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnPropertySetSave',array(
+                'mode' => $isNew ? modSystemEvent::MODE_NEW : modSystemEvent::MODE_UPD,
+                'propertySet' => &$this,
+                'cacheFlag' => $cacheFlag,
+            ));
+        }
+        return $saved;
+    }
+
+    /**
+     * Overrides xPDOObject::remove to fire modX-specific events.
+     *
+     * {@inheritDoc}
+     */
+    public function remove(array $ancestors = array()) {
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnPropertySetBeforeRemove',array(
+                'propertySet' => &$this,
+                'ancestors' => $ancestors,
+            ));
+        }
+
+        $removed = parent :: remove($ancestors);
+
+        if ($removed && $this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnPropertySetRemove',array(
+                'propertySet' => &$this,
+                'ancestors' => $ancestors,
+            ));
+        }
+        return $removed;
     }
 }

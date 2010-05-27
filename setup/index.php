@@ -38,10 +38,23 @@ if ($php_ver_comp < 0) {
     die('<html><head><title></title></head><body><h1>FATAL ERROR: MODx Setup cannot continue.</h1><p>Wrong PHP version! You\'re using PHP version '.MODX_SETUP_PHP_VERSION.', and MODx requires version 5.1.1 or higher.</p></body></html>');
 }
 
-$installBaseUrl= (!isset ($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) != 'on') ? 'http://' : 'https://';
+/* make sure json extension is available */
+if (!function_exists('json_encode')) {
+    die('<html><head><title></title></head><body><h1>FATAL ERROR: MODx Setup cannot continue.</h1><p>MODx requires the PHP JSON extension! You\'re PHP configuration at version '.MODX_SETUP_PHP_VERSION.' does not appear to have this extension enabled. This should be a standard extension on PHP 5.2+; it is available as a PECL extension in 5.1.</p></body></html>');
+}
+
+/* make sure date.timezone is set for PHP 5.3.0+ users */
+if (version_compare(MODX_SETUP_PHP_VERSION,'5.3.0') >= 0) {
+    $phptz = @ini_get('date.timezone');
+    if (empty($phptz)) {
+        die('<html><head><title></title></head><body><h1>FATAL ERROR: MODx Setup cannot continue.</h1><p>To use PHP 5.3.0+, you must set the date.timezone setting in your php.ini. Please do set it to a proper timezone before proceeding. A list can be found <a href="http://us.php.net/manual/en/timezones.php">here</a>.</p></body></html>');
+    }
+}
+$https = isset($_SERVER['HTTPS']) ? $_SERVER['HTTPS'] : false;
+$installBaseUrl= (!$https || strtolower($https) != 'on') ? 'http://' : 'https://';
 $installBaseUrl .= $_SERVER['HTTP_HOST'];
 if ($_SERVER['SERVER_PORT'] != 80) $installBaseUrl= str_replace(':' . $_SERVER['SERVER_PORT'], '', $installBaseUrl);
-$installBaseUrl .= ($_SERVER['SERVER_PORT'] == 80 || isset ($_SERVER['HTTPS']) || strtolower($_SERVER['HTTPS']) == 'on') ? '' : ':' . $_SERVER['SERVER_PORT'];
+$installBaseUrl .= ($_SERVER['SERVER_PORT'] == 80 || ($https !== false || strtolower($https) == 'on')) ? '' : ':' . $_SERVER['SERVER_PORT'];
 $installBaseUrl .= $_SERVER['PHP_SELF'];
 define('MODX_SETUP_URL', $installBaseUrl);
 

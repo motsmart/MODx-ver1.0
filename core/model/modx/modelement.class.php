@@ -234,7 +234,7 @@ class modElement extends modAccessibleSimpleObject {
             $this->_output = $this->xpdo->elementCache[$this->_tag];
             $this->_processed = true;
         } else {
-	        $this->filterInput();
+	    $this->filterInput();
             $this->getContent(is_string($content) ? array('content' => $content) : array());
         }
         return $this->_result;
@@ -311,25 +311,28 @@ class modElement extends modAccessibleSimpleObject {
         $policy = array();
         $context = !empty($context) ? $context : $this->xpdo->context->get('key');
         if (empty($this->_policies) || !isset($this->_policies[$context])) {
-            $accessTable = $this->xpdo->getTableName('modAccessElement');
+            $accessTable = $this->xpdo->getTableName('modAccessCategory');
             $policyTable = $this->xpdo->getTableName('modAccessPolicy');
-            $sql = "SELECT acl.target, acl.principal, acl.authority, acl.policy, p.data FROM {$accessTable} acl " .
-                    "LEFT JOIN {$policyTable} p ON p.id = acl.policy " .
-                    "ON acl.principal_class = 'modUserGroup' " .
-                    "AND (acl.context_key = :context OR acl.context_key IS NULL OR acl.context_key = '') " .
-                    "AND acl.target = :element " .
-                    "GROUP BY acl.target, acl.principal, acl.authority, acl.policy";
+            $categoryClosureTable = $this->xpdo->getTableName('modCategoryClosure');
+            $sql = "SELECT `Acl`.`target`, `Acl`.`principal`, `Acl`.`authority`, `Acl`.`policy`, `Policy`.`data` FROM {$accessTable} `Acl` " .
+                    "LEFT JOIN {$policyTable} `Policy` ON `Policy`.`id` = `Acl`.`policy` " .
+                    "JOIN {$categoryClosureTable} `CategoryClosure` ON `CategoryClosure`.`descendant` = :category " .
+                    "AND `Acl`.`principal_class` = 'modUserGroup' " .
+                    "AND `CategoryClosure`.`ancestor` = `Acl`.`target` " .
+                    "AND (`Acl`.`context_key` = :context OR `Acl`.`context_key` IS NULL OR `Acl`.`context_key` = '') " .
+                    "GROUP BY `target`, `principal`, `authority`, `policy` " .
+                    "ORDER BY `CategoryClosure`.`depth` DESC, `authority` ASC";
             $bindings = array(
-                ':element' => $this->get('id'),
-                ':context' => $context
+                ':category' => $this->get('category'),
+                ':context' => $context,
             );
             $query = new xPDOCriteria($this->xpdo, $sql, $bindings);
             if ($query->stmt && $query->stmt->execute()) {
                 while ($row = $query->stmt->fetch(PDO::FETCH_ASSOC)) {
-                    $policy['modAccessElement'][$row['target']][] = array(
+                    $policy['modAccessCategory'][$row['target']][] = array(
                         'principal' => $row['principal'],
                         'authority' => $row['authority'],
-                        'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                        'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                     );
                 }
             }
@@ -454,45 +457,66 @@ class modElement extends modAccessibleSimpleObject {
      */
     public function setProperties($properties, $merge = false) {
         $set = false;
-        $propertyArray = array();
+        $propertiesArray = array();
         if (is_string($properties)) {
             $properties = $this->xpdo->parser->parsePropertyString($properties);
         }
         if (is_array($properties)) {
             foreach ($properties as $propKey => $property) {
                 if (is_array($property) && isset($property[5])) {
-                    $propertyArray[$property[0]] = array(
+                    $key = $property[0];
+                    $propertyArray = array(
                         'name' => $property[0],
                         'desc' => $property[1],
                         'type' => $property[2],
                         'options' => $property[3],
                         'value' => $property[4],
+                        'lexicon' => !empty($property[5]) ? $property[5] : null,
                     );
                 } elseif (is_array($property) && isset($property['value'])) {
-                    $propertyArray[$property['name']] = array(
+                    $key = $property['name'];
+                    $propertyArray = array(
                         'name' => $property['name'],
                         'desc' => isset($property['description']) ? $property['description'] : (isset($property['desc']) ? $property['desc'] : ''),
                         'type' => isset($property['xtype']) ? $property['xtype'] : (isset($property['type']) ? $property['type'] : 'textfield'),
                         'options' => isset($property['options']) ? $property['options'] : array(),
                         'value' => $property['value'],
+                        'lexicon' => !empty($property['lexicon']) ? $property['lexicon'] : null,
                     );
                 } else {
-                    $propertyArray[$propKey] = array(
+                    $key = $propKey;
+                    $propertyArray = array(
                         'name' => $propKey,
                         'desc' => '',
                         'type' => 'textfield',
                         'options' => array(),
-                        'value' => $property
+                        'value' => $property,
+                        'lexicon' => null,
                     );
                 }
+                /* handle translations of properties (temp fix until modLocalizableObject in 2.1 and beyond) */
+                if (!empty($propertyArray['lexicon'])) {
+                    $this->xpdo->lexicon->load($propertyArray['lexicon']);
+                    $propertyArray['desc'] = $this->xpdo->lexicon($propertyArray['desc']);
+
+                    if (is_array($propertyArray['options'])) {
+                        foreach ($propertyArray['options'] as $optionKey => &$option) {
+                            if (!empty($option['text'])) {
+                                $option['text'] = $this->xpdo->lexicon($option['text']);
+                            }
+                        }
+                    }
+                }
+                $propertiesArray[$key] = $propertyArray;
             }
-            if ($merge && !empty($propertyArray)) {
+
+            if ($merge && !empty($propertiesArray)) {
                 $existing = $this->get('properties');
                 if (is_array($existing) && !empty($existing)) {
-                    $propertyArray = array_merge($existing, $propertyArray);
+                    $propertyArray = array_merge($existing, $propertiesArray);
                 }
             }
-            $set = $this->set('properties', $propertyArray);
+            $set = $this->set('properties', $propertiesArray);
         }
         return $set;
     }

@@ -11,7 +11,6 @@
  * @package modx
  * @subpackage processors.element.plugin
  */
-if (!$modx->hasPermission('view_plugin')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('plugin');
 
 /* setup default properties */
@@ -32,6 +31,7 @@ $count = $modx->getCount('modPlugin');
 /* iterate through plugins */
 $list = array();
 foreach ($plugins as $plugin) {
+    if (!$plugin->checkPolicy('list')) continue;
     $list[] = $plugin->toArray();
 }
 

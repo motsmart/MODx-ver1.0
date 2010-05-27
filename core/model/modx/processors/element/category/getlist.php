@@ -11,7 +11,6 @@
  * @package modx
  * @subpackage processors.element.category
  */
-if (!$modx->hasPermission('view_category')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('category');
 
 /* setup default properties */
@@ -42,6 +41,7 @@ if ($showNone) {
 
 /* iterate through categories */
 foreach ($categories as $category) {
+    if (!$category->checkPolicy('list')) continue;
     $categoryArray = $category->toArray();
 
     $childrenCount = $modx->getCount('modCategory',array('parent' => $category->get('id')));

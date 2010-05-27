@@ -15,6 +15,10 @@ if (empty($scriptProperties['id'])) return $modx->error->failure($modx->lexicon(
 $snippet = $modx->getObject('modSnippet',$scriptProperties['id']);
 if (!$snippet) return $modx->error->failure($modx->lexicon('snippet_err_nf'));
 
+if (!$snippet->checkPolicy('remove')) {
+    return $modx->error->failure($modx->lexicon('access_denied'));
+}
+
 /* invoke OnBeforeSnipFormDelete event */
 $modx->invokeEvent('OnBeforeSnipFormDelete',array(
     'id' => $snippet->get('id'),
@@ -23,7 +27,7 @@ $modx->invokeEvent('OnBeforeSnipFormDelete',array(
 
 /* remove snippet */
 if ($snippet->remove() == false) {
-	return $modx->error->failure($modx->lexicon('snippet_err_delete'));
+    return $modx->error->failure($modx->lexicon('snippet_err_delete'));
 }
 
 /* invoke OnSnipFormDelete event */

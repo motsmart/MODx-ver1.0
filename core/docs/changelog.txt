@@ -2,7 +2,149 @@
 This file shows the changes in recent releases of MODx. The most current release is usually the 
 development release, and is only shown to give an idea of what's currently in the pipeline.
 
-MODx Revolution 2.0.0-rc-1 ($LastChangedRevision$, $LastChangedDate$)
+MODx Revolution 2.0.0-rc-2 ($LastChangedRevision$, $LastChangedDate$)
+====================================
+- Adjusted welcome screen URL to go to a non-release specific confluence page
+- [#MODX-2000] Fixed FC rule to apply to template fields by overriding in controller
+- [#MODX-2000] Add ability to specify a template in REQUEST or alter via plugin in resource/create controller
+- [#MODX-2004] Allow settings to be duplicated when duplicating a context
+- Added missing OnUserBeforeRemove event
+- [#MODX-1797] Fix bug with publishedby field getting updated unintentionally
+- [#MODX-1919], [#XPDO-52] Update xPDO to revision 425 for fix to xPDOManager::createObjectContainer()
+- [#MODX-1918], [#MODX-1919] Improve error reporting in database setup steps
+- Made default click behavior for Files in file tree be to edit
+- [#MODX-1995] Fixed issues regarding sending password via email with new users
+- [#MODX-1549] Preserve file tree state
+- [#MODX-1810] Gender now saves correctly in user panel
+- [#MODX-1635] Redirect to Users grid after creating a new user
+- Fixed bug with import properties
+- [#MODX-1971] Allow ./- in Context key names, but not as first character
+- [#MODX-1997] Added ability to duplicate and set inactive/active Form Customization Rules, batch actions to Rule grid
+- Cleaned up profile editing page
+- Cleaned up style for headers on welcome page
+- Reworked System Info page, cleaned up styling, display, info
+- Added batch actions to Users grid
+- Fixed bugs with removing directories in file tree
+- [#MODX-1996] Fixed missing create/update settings windows
+- Allow for separate paths on derivative resource types based on a [classkey]_delegate_path setting that points to their controllers, added checks to prevent path mapping
+- Prevent deferred render on left nav trees, to prevent loading errors for js hooks
+- Fixed bugs with MODx.grid.encodeModified/encode, plugin event saving
+- Added loadCreateMenus JS event to modx-resource-tree modext widget
+- Refactored js lang loading to allow for dynamic modification of strings
+- [#MODX-1993] Moved config.inc.tpl to core/docs to prevent confusion
+- Added description below TV rows in Resource edit
+- [#MODX-1853] Fixed issue where reload button was above MODx.Browser in TV pane
+- Switched Quick Create/Update Resource description field to more-used introtext field
+- [#MODX-1992] Fixed error in modSnippet preventing multiple executions per request
+- [#MODX-1983] Clarified package uninstall option message
+- [#MODX-1982] Fixed broken cancel button on Package View page
+- [#MODX-1989] Fixed incorrect var reference in getfiles processor
+- Added extra pagination to dropdowns in mgr that might have large #s of records to add usability for large sites
+- Fixed all Elements including Template Variables to properly respect modAccessCategory ACLs.
+- Allow base-level Element Category ACL assignments
+- Fixed some issues with Settings grid and lexicons, key not being displayed, etc
+- [#MODX-1940] Resized lexicon grid toolbar to fit better in smaller resolutions;
+- [#MODX-1950] Adjusted permissions to allow proper listing of Elements; checks 'list' policy on Element now rather than view_[element]
+- [#MODX-1975] Added warning messages for PHP 5.2.0 and 5.1.6 versions in setup asking that users upgrade to 5.3.0+; will still allow installs, however, if the user has those versions
+- [#MODX-1967] Added warning to setup for people who are using PHP 5.3.0+ and dont have date.timezone set
+- Added proper permission checks to Elements/Categories across processors/controllers
+- Added UX for managing Element Category access for User Groups
+- Add modAccessCategory to allow context-specific security policies on modCategory as well as any modElement via the related modCategory; includes policy inheritance to sub-categories
+- Add modCategoryClosure table class to allow for easy recursive queries on modCategory
+- Fixed bug caused by JS/CSS optimizations that would break left nav when too many resources were loaded
+- Fixed bug where access contexts for admin user were being duplicated on upgrades
+- Added extra options to attaching with modPhpMailer; fixed bug in phpmailer that caused E_DEPRECATED errors
+- [#MODX-1912] Added manager logging to file/directory actions
+- [#MODX-1912] Added file/directory specific permissions to allow more fine-grained security on using the file manager
+- [#MODX-1972] Added OnTVInputRenderList, OnTVOutputRenderList, and OnTVOutputRenderPropertiesList System Events to allow you to return a path to specify where to look for custom TV files
+- Allow separate caching directories for smarty when using different manager themes
+- [#MODX-1951] Ensure smarty cache is cleared on site cache clearing and settings
+- Ensure admin ACLs are set on new installs
+- Added check to modResource::stripAlias to make sure modX object is a modX instance
+- Added basic template and default home resource to new installs
+- Added load-only and load,list and view policies to build, adjusted setup to handle admin/resource policies with different IDs
+- Moved setup's global new/upgrade install scripts to separate files
+- MODExt adjustments; main layout now in central viewport so can handle browser resizing, refactored settings grid editing code, IE/FF/Chrome fixes
+- [#MODX-1970] Add scheme property to Link Tags to allow canonical, https, or any URL generation scheme from modX::makeUrl()
+- Fixed bug where core namespace was not in build
+- Update xPDO to revision 424 for fixes related to PDOException reporting
+- Ensure packages are unpacked after downloading
+- Fixed bug with removing a plugin
+- Added System Setting, 'cache_noncore_lexicon_topics', which can be used to disable caching on noncore lexicon topics, which is useful for 3PC development.
+- Deprecated modPackageBuilder::buildLexicon
+- Completely refactored the Lexicon system to now do file-based Lexicon Entries only. DB entries are only for overrides. This allows for proper overriding of
+core lexicon entries, caches faster, and allows for much easier 3PC development.
+- [#MODX-1783] Fixed unnecessary scrollbar bug by removing unnecessary margin on body/html tags
+- Slight spacing tweaks to main layout to make layout feel more open
+- [#MODX-1806] Improvements to messages section
+- [#MODX-1913] Fixed incorrect wording on setup complete page
+- Tweaked launching of layout panel to add consistency across browsers
+- [#MODX-1835] Fixed error on Windows platforms when an extension_packages path contains a colon (:)
+- Added ORM editing formpanel object for editing v/p editing pairs, used now on modUser remote data form
+- Added panel for viewing remote data on a user
+- Added 'lexicon' field to modAccessPolicy to enable translations of descriptions of Permissions
+- Added extended field to modUserProfile to handle a majority of basic extended user profile storage/retrieval needs
+- Added 'lexicon' field to Element properties to enable automatic translating of property descriptions and option names
+- Fixed parent/context_key reference issue when creating resource from context tree node
+- Tweaks to index.css for default mgr theme to correct styling issues in webkit browsers due to ExtJS upgrade
+- Fixed deprecated references to removed images in default mgr template css that was causing 404s
+- [#MODX-1911] Allow for drag/drop reorganizing of categories in the Element tree
+- [#MODX-1892] Various fixes to TV-Template relationship grids
+- [#MODX-1895] Added sanity check for windows systems with file names in file browser
+- [#MODX-1908] Corrected logic flaw in modManagerResponse that prevented smarty templatePath from being set for CMPs
+- Optimized loading for System Settings grid
+- Updated ExtJS to 3.2.1
+- Add remote_key and remote_data to modUser
+- [#MODX-1898] Fix static calls to modX::fromJSON() and modX::toJSON() instance methods (xPDO updated to revision 421)
+- Pushed File tree nodes' context menus to JS layer, added Upload Files button to tree toolbar
+- Pushed Element tree nodes' context menus to JS layer, similar to Resource Tree optimizations
+- [#MODX-1897] Fix Date TemplateVar web output render error in PHP 5.3 due to use of ereg()
+- Fixed bug with Quick Update caused by new resource tree js changes
+- [#MODX-1848] Allowed parent selector to select contexts as the parent in Resource page
+- Pushed Resource tree nodes' context menus to the JS layer, massively decreasing the size of the JSON tree sent in the getNodes processor, vast speeding up tree functionality
+- Made publish/unpublish/delete/undelete actions on the tree only change the class of the node, rather than refreshing the node, speeding up workflow
+- Pushed modX::getService to xPDO layer 
+- [#MODX-1873] Ensure setup redirects use full URL in header
+- [#MODX-1887] Adjust default widths for main layout to render panels more consistently
+- Optimized modX::getChunk() and modX::runSnippet() by caching instances within a request to modX::$sourceCache
+- Modified modX::setDebug(true) to set error_reporting(-1)
+- Optimized modLexicon::loadCache
+- [#MODX-1824] Fixed bug where duplicate wasnt fully duping resources
+- Moved Resource's duplicate method into the model, via modResource::duplicate
+- [#MODX-1868] tree_root_id now accepts a comma-delimited list of Resource IDs to restrict by. Works across contexts as well.
+- [#MODX-1871] Fixed bug with delimiter TV output render
+- Dropped unnecessary ID field on modEvent table and made `name` column PK
+- Refactored modX::invokeEvent and modX::getEventMap to take advantage of new plugin event changes
+- Adjusted the modPluginEvent model to reference the event name rather than id
+- Added new model-based System Events to work more effectively in any context
+- Removed deprecated system events
+- Added tree_root_id setting that allows you to specify the start parent ID of the left Resource tree
+- Fixed bug where User Settings could not be removed
+- Enabled ability to set absolute path and placeholders for filemanager_path and rb_base_dir
+- [#MODX-1791] modPackageBuilder::createPackage now forces lowercase package name to be more compatible across environments
+- Sanity checks to prevent user from accidentally removing admin/resource access policies
+- [#MODX-1860] Fixed bug where new password was being hidden too fast when changing user password
+- Added proxy support to modRestCurlClient for Package Management
+- Added a couple refactorings to modRestSockClient to prevent possible errors
+- Consolidated user group create system events into one event, OnUserGroupCreate
+- Fixed some various plugin event calls
+- Fixed Plugin Event code to restrict groupname to a UI filter only, not in event caching; adjusted UI grid to support groupname in display
+- Refactored file handling processors to use modFileHandler class with modFile and modDirectory derivative classes to abstract file system processing to abstract for multiple environments
+- [#MODX-1789] Added extra checks in Package Management to make sure that the correct directories are created before using it. Will now prevent usage of PM if those directories do not exist or are not writable.
+- [#MODX-1789] Added code to attempt to create core/components and assets/components after install. If fails, displays a notice to user to manually create them themselves to allow Package Management to work properly.
+- [#MODX-1839] Fixed grammatical error in forgot login link on login page
+- [#MODX-1846] Fixed invalid markup for username in top right
+- [#MODX-1854] Fixed invalid references to cultureKey that broke cultureKey setting effectiveness
+- [#MODX-1785] Fixed invalid password variable reference in invoke notfound event in login processor
+- [#MODX-1784] Fixed invalid event call on user update, as well as added event invoking into updatefromgrid processor
+- [#MODX-1836] Set default context_key in modResource objects to 'web'
+- Fixed bug with system info page and active users that would cause error in error log
+- [#MODX-1788] File tree now respects filemanager_path setting. Also cleaned up file browsing processors.
+- Upgraded ExtJS to version 3.2
+- Updated version to 2.0.0-rc-2 for svn development and issue tracking
+- [#MODX-1778] Fixed error that shows up if E_NOTICE set to true in setup/ index due to servers not posting a HTTPS server global
+
+MODx Revolution 2.0.0-rc-1 (LastChangedRevision: 6614, LastChangedDate: 2010-03-22 16:41:04 -0500 (Mon, 22 Mar 2010))
 ====================================
 - Prepared for rc1 release
 - Fixed CSS compression copying in build.xml 

@@ -15,7 +15,7 @@ MODx.panel.UserGroup = function(config) {
         },{            
             xtype: 'modx-tabs'
             ,defaults: { 
-                bodyStyle: 'padding: 1.5em'
+                bodyStyle: 'padding: 15px;'
                 ,autoHeight: true
                 ,border: true
             }
@@ -29,7 +29,7 @@ MODx.panel.UserGroup = function(config) {
             }
             ,items: [{
                 title: _('general_information')
-                ,bodyStyle: 'padding: 1.5em;'
+                ,bodyStyle: 'padding: 15px;'
                 ,defaults: { border: false ,msgTarget: 'side' }
                 ,layout: 'form'
                 ,id: 'modx-chunk-form'
@@ -118,6 +118,26 @@ MODx.panel.UserGroup = function(config) {
                     ,border: false
                 },{
                     xtype: 'modx-grid-user-group-resource-group'
+                    ,preventRender: true
+                    ,usergroup: config.usergroup
+                    ,autoHeight: true
+                    ,width: '97%'
+                    ,listeners: {
+                        'afterRemoveRow': {fn:this.markDirty,scope:this}
+                        ,'afteredit': {fn:this.markDirty,scope:this}
+                        ,'updateAcl': {fn:this.markDirty,scope:this}
+                        ,'createAcl': {fn:this.markDirty,scope:this}
+                    }
+                }]
+            },{
+                title: _('user_group_category_access')
+                ,hidden: config.usergroup === 0 ? true : false
+                ,hideMode: 'offsets'
+                ,items: [{
+                    html: '<p>'+_('user_group_category_access_msg')+'</p>'
+                    ,border: false
+                },{
+                    xtype: 'modx-grid-user-group-category'
                     ,preventRender: true
                     ,usergroup: config.usergroup
                     ,autoHeight: true

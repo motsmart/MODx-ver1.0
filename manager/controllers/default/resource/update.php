@@ -24,9 +24,17 @@ if (!empty($lockedBy) && $lockedBy !== true) {
 }
 
 $resourceClass= isset ($_REQUEST['class_key']) ? $_REQUEST['class_key'] : $resource->get('class_key');
+$resourceClass = str_replace(array('../','..','/','\\'),'',$resourceClass);
 $resourceDir= strtolower(substr($resourceClass, 3));
 
-$delegateView= dirname(__FILE__) . '/' . $resourceDir . '/' . basename(__FILE__);
+/* handle custom resource types */
+$delegateView = dirname(__FILE__) . '/' . $resourceDir . '/';
+$delegateView = $modx->getOption(strtolower($resourceClass).'_delegate_path',null,$delegateView) . basename(__FILE__);
+$delegateView = str_replace(array('{core_path}','{assets_path}','{base_path}'),array(
+    $modx->getOption('core_path',null,MODX_CORE_PATH),
+    $modx->getOption('assets_path',null,MODX_ASSETS_PATH),
+    $modx->getOption('base_path',null,MODX_BASE_PATH),
+),$delegateView);
 if (file_exists($delegateView)) {
     $overridden= include($delegateView);
     if ($overridden !== false) {
@@ -77,7 +85,6 @@ $modx->smarty->assign('resource',$resource);
 
 /* check permissions */
 $publish_document = $modx->hasPermission('publish_document');
-$edit_doc_metatags = $modx->hasPermission('edit_doc_metatags');
 $access_permissions = $modx->hasPermission('access_permissions');
 
 /* register JS scripts */
@@ -134,7 +141,6 @@ Ext.onReady(function() {
         ,deleted: "'.$resource->get('deleted').'"
         ,published: "'.$resource->get('published').'"
         ,richtext: "'.$resource->get('richtext').'"
-        ,edit_doc_metatags: "'.$edit_doc_metatags.'"
         ,access_permissions: "'.$access_permissions.'"
         ,publish_document: "'.$publish_document.'"
         ,preview_url: "'.$url.'"

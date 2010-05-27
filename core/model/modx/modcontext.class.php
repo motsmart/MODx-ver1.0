@@ -98,7 +98,7 @@ class modContext extends modAccessibleObject {
                     $policy['modAccessContext'][$row['target']][] = array(
                         'principal' => $row['principal'],
                         'authority' => $row['authority'],
-                        'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                        'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                     );
                 }
             }
@@ -222,5 +222,57 @@ class modContext extends modAccessibleObject {
             $this->xpdo->log(xPDO::LOG_LEVEL_DEBUG, "modContext[" . $this->get('key') . "]->makeUrl({$id}) = {$url}");
         }
         return $url;
+    }
+
+    /**
+     * Overrides xPDOObject::remove to fire modX-specific events
+     * 
+     * {@inheritDoc}
+     */
+    public function remove(array $ancestors = array()) {
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnContextBeforeRemove',array(
+                'context' => &$this,
+                'ancestors' => $ancestors,
+            ));
+        }
+
+        $removed = parent :: remove($ancestors);
+
+        if ($removed && $this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnContextRemove',array(
+                'context' => &$this,
+                'ancestors' => $ancestors,
+            ));
+        }
+        return $removed;
+    }
+
+    /**
+     * Overrides xPDOObject::save to fire modX-specific events.
+     *
+     * {@inheritDoc}
+     */
+    public function save($cacheFlag= null) {
+        $isNew = $this->isNew();
+
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnContextBeforeSave',array(
+                'context' => &$this,
+                'mode' => $isNew ? modSystemEvent::MODE_NEW : modSystemEvent::MODE_UPD,
+                'cacheFlag' => $cacheFlag,
+            ));
+        }
+
+        $saved = parent :: save($cacheFlag);
+        
+        if ($saved && $this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnContextSave',array(
+                'context' => &$this,
+                'mode' => $isNew ? modSystemEvent::MODE_NEW : modSystemEvent::MODE_UPD,
+                'cacheFlag' => $cacheFlag,
+            ));
+        }
+        return $saved;
     }
 }

@@ -337,10 +337,12 @@ class modInstall {
             ));
 
             /* set default workspace path */
-            if ($workspace = $this->xpdo->getObject('modWorkspace', array (
-                    'active' => 1
-                ))) {
-                if ($path = $workspace->get('path')) {
+            $workspace = $this->xpdo->getObject('modWorkspace', array (
+                'active' => 1
+            ));
+            if ($workspace) {
+                $path = $workspace->get('path');
+                if (!empty($path)) {
                     $path = trim($path);
                 }
                 if (empty ($path) || !file_exists($path)) {
@@ -363,145 +365,15 @@ class modInstall {
                     'msg' => '<p class="notok">'.$this->lexicon['workspace_err_nf'].'</p>'
                 );
             }
+            unset($workspace);
 
             /* if new install */
             if ($mode == modInstall::MODE_NEW) {
-                /* add settings_version */
-                $currentVersion = include MODX_CORE_PATH . 'docs/version.inc.php';
-
-                $settings_version = $this->xpdo->newObject('modSystemSetting');
-                $settings_version->set('key','settings_version');
-                $settings_version->set('value', $currentVersion['full_version']);
-                $settings_version->save();
-
-                /* add default admin user */
-                $user = $this->xpdo->newObject('modUser');
-                $user->set('username', $this->settings->get('cmsadmin'));
-                $user->set('password', md5($this->settings->get('cmspassword')));
-                if ($saved = $user->save()) {
-                    $userProfile = $this->xpdo->newObject('modUserProfile');
-                    $userProfile->set('internalKey', $user->get('id'));
-                    $userProfile->set('fullname', $this->lexicon['default_admin_user']);
-                    $userProfile->set('email', $this->settings->get('cmsadminemail'));
-                    $userProfile->set('role', 1);
-                    $saved = $userProfile->save();
-                    if ($saved) {
-                        $userGroupMembership = $this->xpdo->newObject('modUserGroupMember');
-                        $userGroupMembership->set('user_group', 1);
-                        $userGroupMembership->set('member', $user->get('id'));
-                        $userGroupMembership->set('role', 2);
-                        $saved = $userGroupMembership->save();
-                    }
-                    if ($saved) {
-                        $emailsender = $this->xpdo->getObject('modSystemSetting', array('key' => 'emailsender'));
-                        if ($emailsender) {
-                            $emailsender->set('value', $this->settings->get('cmsadminemail'));
-                            $saved = $emailsender->save();
-                        }
-                    }
-                }
-                if (!$saved) {
-                    $results[] = array (
-                        'class' => 'error',
-                        'msg' => '<p class="notok">'.$this->lexicon['dau_err_save'].'<br />' . print_r($this->xpdo->errorInfo(), true) . '</p>'
-                    );
-                } else {
-                    $results[] = array (
-                        'class' => 'success',
-                        'msg' => '<p class="ok">'.$this->lexicon['dau_saved'].'</p>'
-                    );
-                }
-
-                /* set new_folder_permissions/new_file_permissions if specified */
-                if ($this->settings->get('new_folder_permissions')) {
-                    $settings_folder_perms = $this->xpdo->newObject('modSystemSetting');
-                    $settings_folder_perms->set('key', 'new_folder_permissions');
-                    $settings_folder_perms->set('value', $this->settings->get('new_folder_permissions'));
-                    $settings_folder_perms->save();
-                }
-                if ($this->settings->get('new_file_permissions')) {
-                    $settings_file_perms = $this->xpdo->newObject('modSystemSetting');
-                    $settings_file_perms->set('key', 'new_file_permissions');
-                    $settings_file_perms->set('value', $this->settings->get('new_file_permissions'));
-                    $settings_file_perms->save();
-                }
-
-                /* compress and concat JS on new installs */
-                if (defined('MODX_SETUP_KEY') && MODX_SETUP_KEY != '@svn') {
-                    $concatJavascript = $this->xpdo->getObject('modSystemSetting', array(
-                        'key' => 'concat_js',
-                    ));
-                    if ($concatJavascript) {
-                        $concatJavascript->set('value',1);
-                        $concatJavascript->save();
-                    }
-                    $compressJavascript = $this->xpdo->getObject('modSystemSetting', array(
-                        'key' => 'compress_js',
-                    ));
-                    if ($compressJavascript) {
-                        $compressJavascript->set('value',1);
-                        $compressJavascript->save();
-                    }
-                    $compressCss = $this->xpdo->getObject('modSystemSetting', array(
-                        'key' => 'compress_css',
-                    ));
-                    if ($compressCss) {
-                        $compressCss->set('value',1);
-                        $compressCss->save();
-                    }
-                    unset($concatJavascript,$compressJavascript,$compressCss);
-                }
+                include MODX_SETUP_PATH.'includes/new.install.php';
 
             /* if upgrade */
             } else {
-                /* handle change of manager_theme to default (FIXME: temp hack) */
-                if ($managerTheme = $this->xpdo->getObject('modSystemSetting', array(
-                        'key' => 'manager_theme',
-                        'value:!=' => 'default'
-                    ))) {
-                    $managerTheme->set('value', 'default');
-                    $managerTheme->save();
-                }
-
-                /* handle change of default language to proper IANA code based on initial language selection in setup */
-                if ($managerLanguage = $this->xpdo->getObject('modSystemSetting', array(
-                        'key' => 'manager_language',
-                    ))) {
-                    $language = $this->settings->get('language');
-                    $managerLanguage->set('value',!empty($language) ? $language : 'en');
-                    $managerLanguage->save();
-                }
-
-                /* update settings_version */
-                $settings_version = $this->xpdo->getObject('modSystemSetting', array(
-                    'key' => 'settings_version',
-                ));
-                if ($settings_version == null) {
-                    $settings_version = $this->xpdo->newObject('modSystemSetting');
-                    $settings_version->set('key','settings_version');
-                    $settings_version->set('xtype','textfield');
-                    $settings_version->set('namespace','core');
-                    $settings_version->set('area','system');
-                }
-                $currentVersion = include MODX_CORE_PATH . 'docs/version.inc.php';
-                $settings_version->set('value', $currentVersion['full_version']);
-                $settings_version->save();
-
-                /* make sure admin user (1) has proper group and role */
-                $adminUser = $this->xpdo->getObject('modUser', 1);
-                if ($adminUser) {
-                    $userGroupMembership = $this->xpdo->getObject('modUserGroupMember', array('user_group' => true, 'member' => true));
-                    if (!$userGroupMembership) {
-                        $userGroupMembership = $this->xpdo->newObject('modUserGroupMember');
-                        $userGroupMembership->set('user_group', 1);
-                        $userGroupMembership->set('member', 1);
-                        $userGroupMembership->set('role', 2);
-                        $userGroupMembership->save();
-                    } else {
-                        $userGroupMembership->set('role', 2);
-                        $userGroupMembership->save();
-                    }
-                }
+                include MODX_SETUP_PATH.'includes/upgrade.install.php';
             }
 
             /* empty sessions table to prevent old permissions from loading */
@@ -531,7 +403,8 @@ class modInstall {
      */
     public function verify() {
         $errors = array ();
-        if ($modx = $this->_modx($errors)) {
+        $modx = $this->_modx($errors);
+        if (is_object($modx) && $modx instanceof modX) {
             if ($modx->getCacheManager()) {
                 $modx->cacheManager->clearCache(array(), array(
                     'objects' => '*',
@@ -550,6 +423,48 @@ class modInstall {
      */
     public function cleanup(array $options = array ()) {
         $errors = array();
+        $modx = $this->_modx($errors);
+        if (empty($modx) || !($modx instanceof modX)) {
+            $errors['modx_class'] = $this->lexicon['modx_err_instantiate'];
+            return $errors;
+        }
+
+        /* create the directories for Package Management */
+        $cacheManager = $modx->getCacheManager();
+        $directoryOptions = array(
+            'new_folder_permissions' => $modx->getOption('new_folder_permissions',null,0775),
+        );
+
+        /* create assets/ */
+        $assetsPath = $modx->getOption('base_path').'assets/';
+        if (!is_dir($assetsPath)) {
+            $cacheManager->writeTree($assetsPath,$directoryOptions);
+        }
+        if (!is_dir($assetsPath) || !is_writable($assetsPath)) {
+            $errors['assets_not_created'] = str_replace('[[+path]]',$assetsPath,$this->lexicon['setup_err_assets']);
+        }
+        unset($assetsPath);
+
+        /* create assets/components/ */
+        $assetsCompPath = $modx->getOption('base_path').'assets/components/';
+        if (!is_dir($assetsCompPath)) {
+            $cacheManager->writeTree($assetsCompPath,$directoryOptions);
+        }
+        if (!is_dir($assetsCompPath) || !is_writable($assetsCompPath)) {
+            $errors['assets_comp_not_created'] = str_replace('[[+path]]',$assetsCompPath,$this->lexicon['setup_err_assets_comp']);
+        }
+        unset($assetsCompPath);
+
+        /* create core/components/ */
+        $coreCompPath = $modx->getOption('core_path').'components/';
+        if (!is_dir($coreCompPath)) {
+            $cacheManager->writeTree($coreCompPath,$directoryOptions);
+        }
+        if (!is_dir($coreCompPath) || !is_writable($coreCompPath)) {
+            $errors['core_comp_not_created'] = str_replace('[[+path]]',$coreCompPath,$this->lexicon['setup_err_core_comp']);
+        }
+        unset($coreCompPath);
+
         return $errors;
     }
 
@@ -586,7 +501,7 @@ class modInstall {
      */
     public function writeConfig(array &$results) {
         $written = false;
-        $configTpl = MODX_CORE_PATH . 'config/config.inc.tpl';
+        $configTpl = MODX_CORE_PATH . 'docs/config.inc.tpl';
         $configFile = MODX_CORE_PATH . 'config/' . MODX_CONFIG_KEY . '.inc.php';
 
         $settings = $this->settings->fetch();

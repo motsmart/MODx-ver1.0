@@ -25,17 +25,22 @@ if (empty($scriptProperties['id'])) return $modx->error->failure($modx->lexicon(
 $chunk = $modx->getObject('modChunk',$scriptProperties['id']);
 if (empty($chunk)) return $modx->error->failure($modx->lexicon('chunk_err_nfs',array('id' => $scriptProperties['id'])));
 
+/* check access */
+if (!$chunk->checkPolicy('save')) {
+    return $modx->error->failure($modx->lexicon('access_denied'));
+}
+
 /* if chunk is locked */
 if ($chunk->get('locked') && $modx->hasPermission('edit_locked') == false) {
     return $modx->error->failure($modx->lexicon('chunk_err_locked'));
 }
 
 /* if changing name, but new one already exists */
-$name_exists = $modx->getObject('modChunk',array(
+$nameExists = $modx->getObject('modChunk',array(
     'id:!=' => $chunk->get('id'),
     'name' => $scriptProperties['name'],
 ));
-if ($name_exists != null) {
+if (!empty($nameExists)) {
     $modx->error->addField('name',$modx->lexicon('chunk_err_exists_name'));
 }
 
@@ -53,7 +58,7 @@ if ($modx->error->hasError()) {
 
 /* invoke OnBeforeChunkFormSave event */
 $modx->invokeEvent('OnBeforeChunkFormSave',array(
-    'mode' => 'upd',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $chunk->get('id'),
     'chunk' => &$chunk,
 ));
@@ -69,7 +74,7 @@ if ($chunk->save() == false) {
 
 /* invoke OnChunkFormSave event */
 $modx->invokeEvent('OnChunkFormSave',array(
-    'mode'  => 'upd',
+    'mode'  => modSystemEvent::MODE_UPD,
     'id'    => $chunk->get('id'),
     'chunk' => &$chunk,
 ));

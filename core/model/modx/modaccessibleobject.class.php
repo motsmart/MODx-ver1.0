@@ -165,7 +165,7 @@ class modAccessibleObject extends xPDOObject {
                         foreach ($access as $targetId => $targetPolicy) {
                             foreach ($targetPolicy as $policyIndex => $applicablePolicy) {
                                 if ($this->xpdo->getDebug() === true)
-                                    $this->xpdo->log(xPDO::LOG_LEVEL_DEBUG, 'target pk='. $this->getPrimaryKey() .'; evaluating policy: ' . print_r($applicablePolicy, 1) . ' against principal for user id=' . $this->xpdo->getLoginUserID() .': ' . print_r($principal, 1));
+                                    $this->xpdo->log(xPDO::LOG_LEVEL_DEBUG, 'target pk='. $this->getPrimaryKey() .'; evaluating policy: ' . print_r($applicablePolicy, 1) . ' against principal for user id=' . $this->xpdo->getLoginUserID() .': ' . print_r($principal[$policyAccess], 1));
                                 $principalPolicyData = array();
                                 $principalAuthority = 9999;
                                 if (isset($principal[$policyAccess][$targetId]) && is_array($principal[$policyAccess][$targetId])) {
@@ -178,7 +178,8 @@ class modAccessibleObject extends xPDOObject {
                                                 if (!$applicablePolicy['policy']) {
                                                     return true;
                                                 }
-                                                if ($matches = array_intersect_assoc($principalPolicyData, $applicablePolicy['policy'])) {
+                                                $matches = array_intersect_assoc($principalPolicyData, $applicablePolicy['policy']);
+                                                if ($matches) {
                                                     if ($this->xpdo->getDebug() === true)
                                                         $this->xpdo->log(modX::LOG_LEVEL_DEBUG, 'Evaluating policy matches: ' . print_r($matches, 1));
                                                     $matched = array_diff_assoc($criteria, $matches);
@@ -203,8 +204,6 @@ class modAccessibleObject extends xPDOObject {
     /**
      * Find access policies applicable to this object in a specific context.
      *
-     * TODO: Write this.
-     *
      * @access protected
      * @param string $context A key identifying a specific context to use when
      * searching for the applicable policies. If not provided, the current
@@ -214,5 +213,13 @@ class modAccessibleObject extends xPDOObject {
      */
     public function findPolicy($context = '') {
         return array();
+    }
+
+    public function getPolicies() {
+        return $this->_policies;
+    }
+
+    public function setPolicies(array $policies = array()) {
+        $this->_policies = $policies;
     }
 }

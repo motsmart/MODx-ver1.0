@@ -11,7 +11,6 @@
  * @package modx
  * @subpackage processors.element.template
  */
-if (!$modx->hasPermission('view_template')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('template');
 
 /* get default properties */
@@ -25,10 +24,7 @@ $combo = $modx->getOption('combo',$scriptProperties,false);
 /* query templates */
 $c = $modx->newQuery('modTemplate');
 $c->leftJoin('modCategory','Category');
-$c->select('
-    `modTemplate`.*,
-    `Category`.`category` AS `category`
-');
+$c->select(array('modTemplate.*','Category.category'));
 
 $c->sortby($sort,$dir);
 if ($isLimit) $c->limit($limit,$start);
@@ -53,10 +49,12 @@ if ($combo) {
     $list[] = $empty;
 }
 foreach ($templates as $template) {
-	$templateArray = $template->toArray();
-	$templateArray['category'] = $template->get('category') != null ? $template->get('category') : '';
+    if (!$template->checkPolicy('list')) continue;
+    
+    $templateArray = $template->toArray();
+    $templateArray['category'] = $template->get('category') != null ? $template->get('category') : '';
     unset($templateArray['content']);
-	$list[] = $templateArray;
+    $list[] = $templateArray;
 }
 
 return $this->outputArray($list,$count);

@@ -13,6 +13,59 @@ class modUser extends modPrincipal {
     public $sessionContexts= array ();
 
     /**
+     * Overrides xPDOObject::save to fire modX-specific events
+     * 
+     * {@inheritDoc}
+     */
+    public function save($cacheFlag = false) {
+        $isNew = $this->isNew();
+        
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnUserBeforeSave',array(
+                'mode' => $isNew ? modSystemEvent::MODE_NEW : modSystemEvent::MODE_UPD,
+                'user' => &$this,
+                'cacheFlag' => $cacheFlag,
+            ));
+        }
+
+        $saved = parent :: save($cacheFlag);
+        
+        if ($saved && $this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnUserSave',array(
+                'mode' => $isNew ? modSystemEvent::MODE_NEW : modSystemEvent::MODE_UPD,
+                'user' => &$this,
+                'cacheFlag' => $cacheFlag,
+            ));
+        }
+        return $saved;
+    }
+
+    /**
+     * Overrides xPDOObject::remove to fire modX-specific events
+     *
+     * {@inheritDoc}
+     */
+    public function remove(array $ancestors = array()) {
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnUserBeforeRemove',array(
+                'user' => &$this,
+                'ancestors' => $ancestors,
+            ));
+        }
+
+        $removed = parent :: remove($ancestors);
+
+        if ($this->xpdo instanceof modX) {
+            $this->xpdo->invokeEvent('OnUserRemove',array(
+                'user' => &$this,
+                'ancestors' => $ancestors,
+            ));
+        }
+
+        return $removed;
+    }
+
+    /**
      * Loads the principal attributes that define a modUser security profile.
      *
      * {@inheritdoc}
@@ -60,7 +113,7 @@ class modUser extends modPrincipal {
                                 $this->_attributes[$context][$target][$row['target']][] = array(
                                     'principal' => $row['principal'],
                                     'authority' => $row['authority'],
-                                    'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                                    'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                                 );
                                 $legacyDocGroups[$row['target']]= $row['target'];
                             }
@@ -85,12 +138,12 @@ class modUser extends modPrincipal {
                                 $this->_attributes[$context][$target][$row['target']][] = array(
                                     'principal' => $row['principal'],
                                     'authority' => $row['authority'],
-                                    'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                                    'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                                 );
                             }
                         }
                         break;
-                    case 'modAccessElement' :
+                    case 'modAccessCategory' :
                         $sql = "SELECT acl.target, acl.principal, mr.authority, acl.policy, p.data FROM {$accessTable} acl " .
                                 "LEFT JOIN {$policyTable} p ON p.id = acl.policy " .
                                 "JOIN {$memberTable} mug ON acl.principal_class = 'modUserGroup' " .
@@ -110,7 +163,7 @@ class modUser extends modPrincipal {
                                 $this->_attributes[$context][$target][$row['target']][] = array(
                                     'principal' => $row['principal'],
                                     'authority' => $row['authority'],
-                                    'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                                    'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                                 );
                             }
                         }
@@ -137,7 +190,7 @@ class modUser extends modPrincipal {
                                 $this->_attributes[$context][$target][$row['target']][] = array(
                                     'principal' => 0,
                                     'authority' => $row['authority'],
-                                    'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                                    'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                                 );
                                 $legacyDocGroups[$row['target']]= $row['target'];
                             }
@@ -156,12 +209,12 @@ class modUser extends modPrincipal {
                                 $this->_attributes[$context][$target][$row['target']][] = array(
                                     'principal' => 0,
                                     'authority' => $row['authority'],
-                                    'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                                    'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                                 );
                             }
                         }
                         break;
-                    case 'modAccessElement' :
+                    case 'modAccessCategory' :
                         $sql = "SELECT acl.target, acl.principal, 0 AS authority, acl.policy, p.data FROM {$accessTable} acl " .
                                 "LEFT JOIN {$policyTable} p ON p.id = acl.policy " .
                                 "WHERE acl.principal_class = 'modUserGroup' " .
@@ -177,7 +230,7 @@ class modUser extends modPrincipal {
                                 $this->_attributes[$context][$target][$row['target']][] = array(
                                     'principal' => 0,
                                     'authority' => $row['authority'],
-                                    'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                                    'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                                 );
                             }
                         }
@@ -254,31 +307,17 @@ class modUser extends modPrincipal {
         $changed= false;
         if ($this->get('password') === md5($oldPassword)) {
             if (!empty ($newPassword)) {
-                $this->set('password', $newPassword);
+                $this->set('password', md5($newPassword));
                 $changed= $this->save();
-                $contextKey= $this->xpdo->context->get('key');
-                switch ($contextKey) {
-                    case 'web':
-                        $this->xpdo->invokeEvent('OnWebChangePassword', array (
-                            'userid' => $this->get('id'),
-                            'username' => $this->get('username'),
-                            'userpassword' => $newPassword,
-                        ));
-                        break;
-                    case 'mgr':
-                        $this->xpdo->invokeEvent('OnManagerChangePassword', array (
-                            'userid' => $this->get('id'),
-                            'username' => $this->get('username'),
-                            'userpassword' => $newPassword,
-                        ));
-                        break;
-                    default:
-                        $this->xpdo->invokeEvent('OnUserChangePassword', array (
-                            'userid' => $this->get('id'),
-                            'username' => $this->get('username'),
-                            'userpassword' => $newPassword,
-                        ));
-                        break;
+                if ($changed) {
+                    $this->xpdo->invokeEvent('OnUserChangePassword', array (
+                        'user' => &$this,
+                        'newpassword' => $newPassword,
+                        'oldpassword' => $oldPassword,
+                        'userid' => $this->get('id'),/* deprecated */
+                        'username' => $this->get('username'),/* deprecated */
+                        'userpassword' => $newPassword,/* deprecated */
+                    ));
                 }
             }
         }
@@ -716,5 +755,35 @@ class modUser extends modPrincipal {
             $pass .= $allowable_characters[mt_rand(0, $ps_len -1)];
         }
         return $pass;
+    }
+
+    /**
+     * Send an email to the user
+     *
+     * @param string $message The body of the email
+     * @param array $options An array of options
+     * @return boolean True if successful
+     */
+    public function sendEmail($message,array $options = array()) {
+        if (!($this->xpdo instanceof modX)) return false;
+        $profile = $this->getOne('Profile');
+        if (empty($profile)) return false;
+
+        $this->xpdo->getService('mail', 'mail.modPHPMailer');
+        if (!$this->xpdo->mail) return false;
+        
+        $this->xpdo->mail->set(modMail::MAIL_BODY, $message);
+        $this->xpdo->mail->set(modMail::MAIL_FROM, $this->xpdo->getOption('from',$options,$this->xpdo->getOption('emailsender')));
+        $this->xpdo->mail->set(modMail::MAIL_FROM_NAME, $this->xpdo->getOption('fromName',$options,$this->xpdo->getOption('site_name')));
+        $this->xpdo->mail->set(modMail::MAIL_SENDER, $this->xpdo->getOption('sender',$options,$this->xpdo->getOption('emailsender')));
+        $this->xpdo->mail->set(modMail::MAIL_SUBJECT, $this->xpdo->getOption('subject',$options,$this->xpdo->getOption('emailsubject')));
+        $this->xpdo->mail->address('to',$profile->get('email'),$profile->get('fullname'));
+        $this->xpdo->mail->address('reply-to',$this->xpdo->getOption('sender',$options,$this->xpdo->getOption('emailsender')));
+        $this->xpdo->mail->setHTML($this->xpdo->getOption('html',$options,true));
+        if ($this->xpdo->mail->send() == false) {
+            return false;
+        }
+        $this->xpdo->mail->reset();
+        return true;
     }
 }

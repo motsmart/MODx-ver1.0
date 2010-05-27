@@ -279,7 +279,9 @@ class modResource extends modAccessibleSimpleObject {
         $length = $mbext ? mb_strlen($alias, $charset) : strlen($alias);
 
         /* strip html and optionally MODx element tags (stripped by default) */
-        $alias = $this->xpdo->stripTags($alias, '', $stripElementTags ? array() : null);
+        if ($this->xpdo instanceof modX) {
+            $alias = $this->xpdo->stripTags($alias, '', $stripElementTags ? array() : null);
+        }
 
         /* replace &nbsp; with the specified word delimiter */
         $alias = str_replace('&nbsp;', $delimiter, $alias);
@@ -288,11 +290,12 @@ class modResource extends modAccessibleSimpleObject {
         $alias = html_entity_decode($alias, ENT_QUOTES, $charset);
 
         /* replace any remaining & with a lexicon value if available */
-        if ($this->xpdo->getService('lexicon','modLexicon')) {
+        if ($this->xpdo instanceof modX && $this->xpdo->getService('lexicon','modLexicon')) {
             $alias = str_replace('&', $this->xpdo->lexicon('and') ? ' ' . $this->xpdo->lexicon('and') . ' ' : ' and ', $alias);
         }
 
         /* apply transliteration as configured */
+        if (!($this->xpdo instanceof modX)) { $translit = 'none'; }
         switch ($translit) {
             case '':
             case 'none':
@@ -483,7 +486,7 @@ class modResource extends modAccessibleSimpleObject {
                     $policy['modAccessResourceGroup'][$row['target']][] = array(
                         'principal' => $row['principal'],
                         'authority' => $row['authority'],
-                        'policy' => $row['data'] ? xPDO :: fromJSON($row['data'], true) : array(),
+                        'policy' => $row['data'] ? $this->xpdo->fromJSON($row['data'], true) : array(),
                     );
                 }
             }
@@ -523,5 +526,70 @@ class modResource extends modAccessibleSimpleObject {
         }
         $tv = $this->xpdo->getObject('modTemplateVar',$pk);
         return $tv == null ? null : $tv->renderOutput($this->get('id'));
+    }
+
+    /**
+     *
+     * @return mixed Returns either an error message, or the newly created modResource object.
+     */
+    public function duplicate(array $options = array()) {
+        if (!($this->xpdo instanceof modX)) return false;
+
+        /* duplicate resource */
+        $newResource = $this->xpdo->newObject($this->get('class_key'));
+        $newResource->fromArray($this->toArray('', true), '', false, true);
+        $newResource->set('pagetitle',!empty($options['newName']) ? $options['newName'] : $this->xpdo->lexicon('duplicate_of').$this->get('pagetitle'));
+        $newResource->set('alias', null);
+
+        /* make sure children get assigned to new parent */
+        $newResource->set('parent',isset($options['parent']) ? $options['parent'] : $this->get('parent'));
+        $newResource->set('createdby',$this->xpdo->user->get('id'));
+        $newResource->set('createdon',time());
+        $newResource->set('editedby',0);
+        $newResource->set('editedon',0);
+        $newResource->set('deleted',false);
+        $newResource->set('deletedon',0);
+        $newResource->set('deletedby',0);
+        $newResource->set('publishedon',0);
+        $newResource->set('publishedby',0);
+        $newResource->set('published',false);
+        
+        if (!$newResource->save()) {
+            return $this->xpdo->lexicon('resource_err_duplicate');
+        }
+
+        $tvds = $this->getMany('TemplateVarResources');
+        foreach ($tvds as $oldTemplateVarResource) {
+            $newTemplateVarResource = $this->xpdo->newObject('modTemplateVarResource');
+            $newTemplateVarResource->set('contentid',$newResource->get('id'));
+            $newTemplateVarResource->set('tmplvarid',$oldTemplateVarResource->get('tmplvarid'));
+            $newTemplateVarResource->set('value',$oldTemplateVarResource->get('value'));
+            $newTemplateVarResource->save();
+        }
+
+        $groups = $this->getMany('ResourceGroupResources');
+        foreach ($groups as $oldResourceGroupResource) {
+            $newResourceGroupResource = $this->xpdo->newObject('modResourceGroupResource');
+            $newResourceGroupResource->set('document_group',$oldResourceGroupResource->get('document_group'));
+            $newResourceGroupResource->set('document',$oldResourceGroupResource->get('id'));
+            $newResourceGroupResource->save();
+        }
+
+        /* duplicate resource, recursively */
+        $duplicateChildren = isset($options['duplicateChildren']) ? $options['duplicateChildren'] : true;
+        if ($duplicateChildren) {
+            if (!$this->checkPolicy('add_children')) return $newResource;
+            
+            $children = $this->getMany('Children');
+            if (is_array($children) && count($children) > 0) {
+                foreach ($children as $child) {
+                    $child->duplicate(array(
+                        'duplicateChildren' => true,
+                        'parent' => $newResource->get('id'),
+                    ));
+                }
+            }
+        }
+        return $newResource;
     }
 }

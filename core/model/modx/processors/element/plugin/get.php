@@ -15,6 +15,10 @@ if (empty($scriptProperties['id'])) return $modx->error->failure($modx->lexicon(
 $plugin = $modx->getObject('modPlugin', $scriptProperties['id']);
 if ($plugin == null) return $modx->error->failure($modx->lexicon('plugin_err_nf'));
 
+if (!$plugin->checkPolicy('view')) {
+    return $modx->error->failure($modx->lexicon('access_denied'));
+}
+
 $properties = $plugin->get('properties');
 if (!is_array($properties)) $properties = array();
 
@@ -26,6 +30,7 @@ foreach ($properties as $property) {
         $property['type'],
         $property['options'],
         $property['value'],
+        $property['lexicon'],
         false, /* overridden set to false */
     );
 }

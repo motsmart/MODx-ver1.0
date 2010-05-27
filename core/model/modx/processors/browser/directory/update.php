@@ -9,25 +9,34 @@
  * @package modx
  * @subpackage processors.browser.directory
  */
-if (!$modx->hasPermission('file_manager')) return $modx->error->failure($modx->lexicon('permission_denied'));
+if (!$modx->hasPermission('directory_update')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('file');
 
 if (empty($scriptProperties['dir'])) return $modx->error->failure($modx->lexicon('file_folder_err_ns'));
+if (empty($scriptProperties['name'])) return $modx->error->failure($modx->lexicon('file_folder_err_ns'));
 
-$d = isset($scriptProperties['prependPath']) && $scriptProperties['prependPath'] != 'null' && $scriptProperties['prependPath'] != null
-    ? $scriptProperties['prependPath']
-    : $modx->getOption('base_path').$modx->getOption('rb_base_dir');
-$olddir = realpath($d.$scriptProperties['dir']);
+/* get base paths and sanitize incoming paths */
+$modx->getService('fileHandler','modFileHandler');
+$root = $modx->fileHandler->getBasePath();
 
-if (!is_dir($olddir)) return $modx->error->failure($modx->lexicon('file_folder_err_invalid'));
-if (!is_readable($olddir) || !is_writable($olddir)) {
+/* instantiate modDirectory object */
+$oldDirectory = $modx->fileHandler->make($root.$scriptProperties['dir']);
+
+/* make sure is a directory and writable */
+if (!($oldDirectory instanceof modDirectory)) return $modx->error->failure($modx->lexicon('file_folder_err_invalid'));
+if (!$oldDirectory->isReadable() || !$oldDirectory->isWritable()) {
 	return $modx->error->failure($modx->lexicon('file_folder_err_perms'));
 }
 
-$newdir = strtr(dirname($olddir).'/'.$scriptProperties['name'],'\\','/');
+/* sanitize new path */
+$newPath = $modx->fileHandler->sanitizePath($scriptProperties['name']);
+$newPath = $modx->fileHandler->postfixSlash($newPath);
 
-if (!@rename($olddir,$newdir)) {
+/* rename the dir */
+if (!$oldDirectory->rename($newPath)) {
     return $modx->error->failure($modx->lexicon('file_folder_err_rename'));
 }
+
+$modx->logManagerAction('directory_rename','',$oldDirectory->getPath());
 
 return $modx->error->success();

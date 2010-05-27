@@ -30,8 +30,8 @@
 class modParser {
     public $modx= null;
 
-    function __construct(&$modx) {
-        $this->modx= & $modx;
+    function __construct(xPDO &$modx) {
+        $this->modx =& $modx;
     }
 
     /**
@@ -931,14 +931,20 @@ class modLinkTag extends modTag {
                 if (!empty($this->_output)) {
                     $qs = '';
                     $context = '';
+                    $scheme = -1;
                     if (is_array($this->_properties) && !empty($this->_properties)) {
                         $qs = array();
                         if (array_key_exists('context', $this->_properties)) {
                             $context = $this->_properties['context'];
                             unset($this->_properties['context']);
                         }
+                        if (array_key_exists('scheme', $this->_properties)) {
+                            $scheme = $this->_properties['scheme'];
+                            unset($this->_properties['scheme']);
+                            if (is_numeric($scheme)) $scheme = (integer) $scheme;
+                        }
                         foreach ($this->_properties as $propertyKey => $propertyValue) {
-                            if ($propertyKey === 'context') continue;
+                            if (in_array($propertyKey, array('context', 'scheme'))) continue;
                             $qs[]= "{$propertyKey}={$propertyValue}";
                         }
                         if ($qs= implode('&', $qs)) {
@@ -946,7 +952,7 @@ class modLinkTag extends modTag {
                             $qs= str_replace(array('%26','%3D'),array('&amp;','='),$qs);
                         }
                     }
-                    $this->_output= $this->modx->makeUrl($this->_output, $context, $qs);
+                    $this->_output= $this->modx->makeUrl($this->_output, $context, $qs, $scheme);
                 }
             }
             if (!empty($this->_output)) {
@@ -1007,7 +1013,7 @@ class modLexiconTag extends modTag {
                 }
                 $topic = !empty($this->_properties['topic']) ? $this->_properties['topic'] : 'default';
                 $namespace = !empty($this->_properties['namespace']) ? $this->_properties['namespace'] : 'core';
-                $language = !empty($this->_properties['language']) ? $this->_properties['language'] : $this->modx->cultureKey;
+                $language = !empty($this->_properties['language']) ? $this->_properties['language'] : $this->modx->getOption('cultureKey',null,'en');
                 $this->modx->lexicon->load($language.':'.$namespace.':'.$topic);
 
                 $this->_content= $this->modx->lexicon($this->get('name'), $this->_properties);

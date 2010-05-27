@@ -9,33 +9,34 @@
  * @package modx
  * @subpackage processors.browser.file
  */
-if (!$modx->hasPermission('file_manager')) return $modx->error->failure($modx->lexicon('permission_denied'));
+if (!$modx->hasPermission('file_update')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('file');
 
-$file = rawurldecode($scriptProperties['file']);
-$newname = $scriptProperties['name'];
+/* get base paths and sanitize incoming paths */
+$filename = rawurldecode($scriptProperties['file']);
 
-if (!file_exists($file)) return $modx->error->failure($modx->lexicon('file_err_nf'));
+/* create modFile object */
+$modx->getService('fileHandler','modFileHandler');
+$file = $modx->fileHandler->make($filename);
+
+/* verify file exists */
+if (!$file->exists()) return $modx->error->failure($modx->lexicon('file_err_nf'));
 
 /* write file */
-$f = @fopen($file,'w+');
-fwrite($f,$scriptProperties['content']);
-fclose($f);
+$file->setContent($scriptProperties['content']);
+$file->save();
 
 /* rename if necessary */
-$filename = ltrim(strrchr($file,'/'),'/');
-$path = str_replace(strrchr($file,'/'),'',$file);
+$newPath= $scriptProperties['name'];
 
-if ($filename != $newname) {
-    if (!@rename($path.$filename,$path.$newname)) {
+if ($file->getPath() != $newPath) {
+    if (!$file->rename($newPath)) {
         return $modx->error->failure($modx->lexicon('file_err_rename'));
     }
-    $fullname = $path.$newname;
-} else {
-    $fullname = $file;
 }
 
+$modx->logManagerAction('file_update','',$file->getPath());
 
 return $modx->error->success('',array(
-    'file' => rawurlencode($fullname),
+    'file' => rawurlencode($file->getPath()),
 ));

@@ -4,7 +4,7 @@ MODx.panel.ElementProperties = function(config) {
         id: 'modx-panel-element-properties'
         ,title: _('properties')
         ,header: false
-        ,bodyStyle: 'padding: 1.5em;'
+        ,bodyStyle: 'padding: 15px;'
         ,defaults: { collapsible: false ,autoHeight: true ,border: false }
         ,items: [{
             html: '<p>'+_('element_properties_desc')+'</p>'
@@ -37,7 +37,7 @@ MODx.grid.ElementProperties = function(config) {
         title: _('properties')
         ,id: 'modx-grid-element-properties'
         ,maxHeight: 300
-        ,fields: ['name','desc','xtype','options','value','overridden']
+        ,fields: ['name','desc','xtype','options','value','lexicon','overridden']
         ,autoExpandColumn: 'value'
         ,sortBy: 'name'
         ,width: '100%'
@@ -302,6 +302,7 @@ Ext.extend(MODx.grid.ElementProperties,MODx.grid.LocalProperty,{
                         ,xtype: r.xtype
                         ,options: r.options
                         ,value: r.value
+                        ,lexicon: r.lexicon
                         ,overridden: this.isDefaultPropSet() ? 0 : 2
                     });
                     this.getStore().add(rec);
@@ -326,6 +327,7 @@ Ext.extend(MODx.grid.ElementProperties,MODx.grid.LocalProperty,{
                     rec.set('xtype',r.xtype);
                     rec.set('options',r.options);
                     rec.set('value',r.value);
+                    rec.set('lexicon',r.lexicon);
                     rec.set('overridden',r.overridden == 2 ? 2 : (!def ? 1 : 0));
                     this.getView().refresh();
                     this.onDirty();
@@ -561,20 +563,20 @@ MODx.window.CreateElementProperty = function(config) {
             ,name: 'name'
             ,id: 'modx-cep-name'
             ,xtype: 'textfield'            
-            ,width: 150
+            ,width: 200
             ,allowBlank: false
         },{
             fieldLabel: _('description')
             ,name: 'desc'
             ,id: 'modx-cep-desc'
             ,xtype: 'textarea'
-            ,width: 150
+            ,width: 200
         },{
             fieldLabel: _('type')
             ,name: 'xtype'
             ,id: 'modx-cep-xtype'
             ,xtype: 'modx-combo-xtype'
-            ,width: 150
+            ,width: 200
             ,listeners: {
                 'select': {fn:function(cb,r,i) {
                     var g = Ext.getCmp('modx-cep-grid-element-property-options');
@@ -587,6 +589,13 @@ MODx.window.CreateElementProperty = function(config) {
                     this.syncSize();
                 },scope:this}
             }
+        },{
+            xtype: 'textfield'
+            ,fieldLabel: _('lexicon')
+            ,name: 'lexicon'
+            ,id: 'modx-cep-lexicon'
+            ,width: 200
+            ,allowBlank: true
         },{
             xtype: 'modx-element-value-field'
             ,xtypeField: 'modx-cep-xtype'
@@ -650,19 +659,19 @@ MODx.window.UpdateElementProperty = function(config) {
             ,name: 'name'
             ,id: 'modx-uep-name'
             ,xtype: 'textfield'
-            ,width: 150
+            ,width: 200
         },{
             fieldLabel: _('description')
             ,name: 'desc'
             ,id: 'modx-uep-desc'
             ,xtype: 'textarea'
-            ,width: 150
+            ,width: 200
         },{
             fieldLabel: _('type')
             ,name: 'xtype'
             ,xtype: 'modx-combo-xtype'
             ,id: 'modx-uep-xtype'
-            ,width: 150
+            ,width: 200
             ,listeners: {
                 'select': {fn:function(cb,r,i) {
                     var g = Ext.getCmp('modx-uep-grid-element-property-options');
@@ -676,6 +685,13 @@ MODx.window.UpdateElementProperty = function(config) {
                     this.syncSize();         
                 },scope:this}
             }
+        },{
+            xtype: 'textfield'
+            ,fieldLabel: _('lexicon')
+            ,name: 'lexicon'
+            ,id: 'modx-uep-lexicon'
+            ,width: 200
+            ,allowBlank: true
         },{
             xtype: 'hidden'
             ,name: 'overridden'
@@ -759,13 +775,13 @@ MODx.window.CreateElementPropertyOption = function(config) {
             ,name: 'name'
             ,id: 'modx-cepo-name'
             ,xtype: 'textfield'
-            ,width: 150
+            ,width: 200
         },{
             fieldLabel: _('value')
             ,name: 'value'
             ,id: 'modx-cepo-value'
             ,xtype: 'textfield'
-            ,width: 150
+            ,width: 200
         }]
     });
     MODx.window.CreateElementPropertyOption.superclass.constructor.call(this,config);
@@ -832,7 +848,7 @@ MODx.form.ElementValueField = function(config) {
         fieldLabel: _('value')
         ,name: 'value'
         ,xtype: 'textfield'
-        ,width: 150
+        ,width: 200
     });
     MODx.form.ElementValueField.superclass.constructor.call(this,config);
     this.config = config;
@@ -960,7 +976,7 @@ MODx.window.ImportProperties = function(config) {
             html: _('properties_import_msg')
             ,id: 'modx-impp-desc'
             ,border: false
-            ,bodyStyle: 'margin: 1em;'
+            ,bodyStyle: 'margin: 10px;'
         },{
             xtype: 'textfield'
             ,fieldLabel: _('file')

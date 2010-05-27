@@ -23,6 +23,10 @@ if (empty($scriptProperties['id'])) return $modx->error->failure($modx->lexicon(
 $snippet = $modx->getObject('modSnippet',$scriptProperties['id']);
 if ($snippet == null) return $modx->error->failure($modx->lexicon('snippet_err_nf'));
 
+if (!$snippet->checkPolicy('save')) {
+    return $modx->error->failure($modx->lexicon('access_denied'));
+}
+
 /* check if locked, if so, prevent access */
 if ($snippet->get('locked') && $modx->hasPermission('edit_locked') == false) {
     return $modx->error->failure($modx->lexicon('snippet_err_locked'));
@@ -54,7 +58,7 @@ $snippet->set('locked',!empty($scriptProperties['locked']));
 
 /* invoke OnBeforeSnipFormSave event */
 $modx->invokeEvent('OnBeforeSnipFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $snippet->get('id'),
     'snippet' => &$snippet,
 ));
@@ -66,7 +70,7 @@ if ($snippet->save() == false) {
 
 /* invoke OnSnipFormSave event */
 $modx->invokeEvent('OnSnipFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $snippet->get('id'),
     'snippet' => &$snippet,
 ));

@@ -9,27 +9,37 @@
  * @package modx
  * @subpackage processors.browser.file
  */
-if (!$modx->hasPermission('file_manager')) return $modx->error->failure($modx->lexicon('permission_denied'));
+if (!$modx->hasPermission('file_remove')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('file');
 
 if (empty($scriptProperties['file'])) return $modx->error->failure($modx->lexicon('file_err_ns'));
 
-$d = isset($scriptProperties['prependPath']) && $scriptProperties['prependPath'] != 'null' && $scriptProperties['prependPath'] != null
-    ? $scriptProperties['prependPath']
-    : $modx->getOption('base_path').$modx->getOption('rb_base_dir');
-$file = $d.$scriptProperties['file'];
+/* get base paths and sanitize incoming paths */
+$modx->getService('fileHandler','modFileHandler');
 
 /* in case rootVisible is true */
-$file = str_replace('root/','',$file);
+$file = str_replace('root/','',$scriptProperties['file']);
 $file = str_replace('undefined/','',$file);
 
-if (!file_exists($file))
-	return $modx->error->failure($modx->lexicon('file_err_nf').': '.$file);
-if (!is_readable($file) || !is_writable($file))
-	return $modx->error->failure($modx->lexicon('file_err_perms_remove'));
-if (!is_file($file))
-	return $modx->error->failure($modx->lexicon('file_err_invalid'));
+/* create modFile object */
+$root = $modx->fileHandler->getBasePath();
+$file = $modx->fileHandler->make($root.$file);
 
-if (!@unlink($file)) return $modx->error->failure($modx->lexicon('file_err_remove'));
+/* verify file exists and is writable */
+if (!$file->exists()) {
+    return $modx->error->failure($modx->lexicon('file_err_nf').': '.$file);
+} else if (!$file->isReadable() || !$file->isWritable()) {
+    return $modx->error->failure($modx->lexicon('file_err_perms_remove'));
+} else if (!($file instanceof modFile)) {
+    return $modx->error->failure($modx->lexicon('file_err_invalid'));
+}
+
+/* remove file */
+if (!$file->remove()) {
+    return $modx->error->failure($modx->lexicon('file_err_remove'));
+}
+
+/* log manager action */
+$modx->logManagerAction('file_remove','',$file->getPath());
 
 return $modx->error->success();

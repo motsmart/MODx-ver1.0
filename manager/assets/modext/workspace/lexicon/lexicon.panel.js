@@ -13,7 +13,7 @@ MODx.panel.Lexicon = function(config) {
         id: 'modx-panel-lexicon'
         ,itemId: 'panel-lexicon'
         ,bodyStyle: ''
-        ,defaults: { collapsible: false }
+        ,defaults: { autoHeight: true, collapsible: false }
         ,items: [{
             html: '<h2>'+_('lexicon_management')+'</h2>'
             ,border: false
@@ -33,42 +33,6 @@ MODx.panel.Lexicon = function(config) {
                 ,itemId: 'grid-lexicon'
                 ,title: ''
                 ,preventRender: true
-            }]
-        },{
-            title: _('lexicon_topics')
-            ,layout: 'form'
-            ,bodyStyle: 'padding: 15px;'
-            ,items: [{
-                html: '<p>'+_('lexicon_topics_desc')+'</p>'
-                ,border: false
-            },{
-                xtype: 'modx-grid-lexicon-topic'
-                ,itemId: 'grid-topic'
-                ,title: ''
-                ,preventRender: true
-                ,listeners: {
-                    'afterRemoveRow':{fn:function() {
-                        Ext.getCmp('modx-lexicon-filter-topic').store.reload();
-                    },scope:this}
-                }
-            }]
-        },{
-            title: _('languages')
-            ,layout: 'form'
-            ,bodyStyle: 'padding: 15px;'
-            ,items: [{
-                html: '<p>'+_('languages_desc')+'</p>'
-                ,border: false
-            },{
-                xtype: 'modx-grid-language'
-                ,itemId: 'grid-language'
-                ,title: ''
-                ,preventRender: true
-                ,listeners: {
-                    'afterRemoveRow':{fn:function() {
-                        Ext.getCmp('modx-lexicon-filter-language').store.reload();
-                    },scope:this}
-                }
             }]
         }])]
     });

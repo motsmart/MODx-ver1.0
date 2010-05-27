@@ -17,8 +17,8 @@ MODx.panel.Welcome = function(config) {
         },{
             title: _('configcheck_title')
             ,contentEl: 'modx-config'
-            ,style: 'padding: .5em;'
-            ,bodyStyle: 'padding: 1.5em;'
+            ,style: 'padding: 5px;'
+            ,bodyStyle: 'padding: 10px;'
             ,collapsible: true
             ,titleCollapse: true
             ,hidden: !config.displayConfigCheck
@@ -37,12 +37,12 @@ MODx.panel.Welcome = function(config) {
                 ,items: [{
                     title: _('modx_news')
                     ,contentEl: 'modx-news'
-					,cls: 'x-panel-header x-portal-space'
+                    ,cls: 'x-panel-header x-portal-space'
                     ,hidden: config.newsEnabled ? false : true
                 },{
                     title: _('recent_docs')
                     ,id: 'modx-recent'
-					,cls: 'x-panel-header x-portal-space'
+                    ,cls: 'x-panel-header x-portal-space'
                     ,collapsed: true
                     ,hidden: MODx.hasViewDocument == 1 ? false : true
                     ,items: [{

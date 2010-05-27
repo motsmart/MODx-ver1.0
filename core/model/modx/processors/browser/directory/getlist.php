@@ -12,12 +12,11 @@
  * @package modx
  * @subpackage processors.browser.directory
  */
-if (!$modx->hasPermission('file_manager')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('file');
 
+/* setup default properties */
 $hideFiles = !empty($scriptProperties['hideFiles']) && $scriptProperties['hideFiles'] != 'false' ? true : false;
 $stringLiterals = !empty($scriptProperties['stringLiterals']) ? true : false;
-
 $dir = !isset($scriptProperties['id']) || $scriptProperties['id'] == 'root' ? '' : str_replace('n_','',$scriptProperties['id']);
 
 $directories = array();
@@ -26,98 +25,77 @@ $ls = array();
 
 $actions = $modx->request->getAllActionIDs();
 
-$root = !empty($scriptProperties['prependPath']) && $scriptProperties['prependPath'] != 'null'
-    ? $scriptProperties['prependPath']
-    : $modx->getOption('base_path').$modx->getOption('rb_base_dir');
+/* get permissions available */
+$canChmodDirs = $modx->hasPermission('directory_chmod');
+$canCreateDirs = $modx->hasPermission('directory_create');
+$canListDirs = $modx->hasPermission('directory_list');
+$canRemoveDirs = $modx->hasPermission('directory_remove');
+$canUpdateDirs = $modx->hasPermission('directory_update');
+$canListFiles = $modx->hasPermission('file_list');
+$canRemoveFile = $modx->hasPermission('file_remove');
+$canUpdateFile = $modx->hasPermission('file_update');
+$canUpload = $modx->hasPermission('file_upload');
 
-$fullpath = $root.($dir != '' ? $dir : '');
+/* get base paths and sanitize incoming paths */
+$modx->getService('fileHandler','modFileHandler');
+$dir = $modx->fileHandler->sanitizePath($dir);
+$dir = $modx->fileHandler->postfixSlash($dir);
+$root = $modx->fileHandler->getBasePath();
+$fullpath = $root.$dir;
+
+$relativeRootPath = $modx->fileHandler->postfixSlash($root);
+
+$editAction = false;
+$act = $modx->getObject('modAction',array('controller' => 'system/file/edit'));
+if ($act) { $editAction = $act->get('id'); }
+
+
+/* iterate through directories */
 foreach (new DirectoryIterator($fullpath) as $file) {
-	if (in_array($file,array('.','..','.svn','_notes'))) continue;
-	if (!$file->isReadable()) continue;
+    if (in_array($file,array('.','..','.svn','_notes'))) continue;
+    if (!$file->isReadable()) continue;
 
     $fileName = $file->getFilename();
     $filePathName = $file->getPathname();
     $octalPerms = substr(sprintf('%o', $file->getPerms()), -4);
 
-	/* handle dirs */
-	if ($file->isDir()) {
-		$directories[$fileName] = array(
-			'id' => $dir.'/'.$fileName,
-			'text' => $fileName,
-			'cls' => 'folder',
-			'type' => 'dir',
-			//'disabled' => $file->isWritable(),
+    /* handle dirs */
+    if ($file->isDir() && $canListDirs) {
+        $cls = 'folder';
+        if ($canChmodDirs) $cls .= ' pchmod';
+        if ($canCreateDirs) $cls .= ' pcreate';
+        if ($canRemoveDirs) $cls .= ' premove';
+        if ($canUpdateDirs) $cls .= ' pupdate';
+        if ($canUpload) $cls .= ' pupload';
+        
+        $directories[$fileName] = array(
+            'id' => $dir.$fileName,
+            'text' => $fileName,
+            'cls' => $cls,
+            'type' => 'dir',
             'leaf' => false,
             'perms' => $octalPerms,
-            'menu' => array(
-                'items' => array(
-                    array(
-                        'text' => $modx->lexicon('file_folder_create_here'),
-                        'handler' => 'function(itm,e) {
-                            this.createDirectory(itm,e);
-                        }',
-                    ),
-                    '-',
-                    array(
-                        'text' => $modx->lexicon('file_folder_chmod'),
-                        'handler' => 'function(itm,e) {
-                            this.chmodDirectory(itm,e);
-                        }',
-                    ),
-                    array(
-                        'text' => $modx->lexicon('rename'),
-                        'handler' => 'function(itm,e) {
-                            this.renameFile(itm,e);
-                        }',
-                    ),
-                    '-',
-                    array(
-                        'text' => $modx->lexicon('file_folder_remove'),
-                        'handler' => 'function(itm,e) {
-                            this.remove("file_folder_confirm_remove");
-                        }',
-                    ),
-                ),
-            ),
-		);
-	}
+        );
+    }
 
     /* get files in current dir */
-    if ($file->isFile() && !$hideFiles) {
+    if ($file->isFile() && !$hideFiles && $canListFiles) {
         $ext = pathinfo($filePathName,PATHINFO_EXTENSION);
+
+        $cls = 'icon-file icon-'.$ext;
+        if ($canRemoveFile) $cls .= ' premove';
+        if ($canUpdateFile) $cls .= ' pupdate';
+        $encFile = rawurlencode($filePathName);
         $files[$fileName] = array(
-            'id' => $dir.'/'.$fileName,
+            'id' => $dir.$fileName,
             'text' => $fileName,
-            'cls' => 'icon-file icon-'.$ext,
+            'cls' => $cls,
             'type' => 'file',
             'leaf' => true,
+            'page' => !empty($editAction) ? '?a='.$editAction.'&file='.$encFile : null,
             'perms' => $octalPerms,
-            'menu' => array(
-                'items' => array(
-                    array(
-                        'text' => $modx->lexicon('file_edit'),
-                        'handler' => 'function() {
-                            Ext.getCmp("modx-file-tree").loadAction("'
-                                . 'a=' . $actions['system/file/edit']
-                                . '&file=' . rawurlencode($filePathName)
-                             . '");
-                        }',
-                    ),
-                    array(
-                        'text' => $modx->lexicon('rename'),
-                        'handler' => 'function(itm,e) {
-                            this.renameFile(itm,e);
-                        }',
-                    ),
-                    '-',
-                    array(
-                        'text' => $modx->lexicon('file_remove'),
-                        'handler' => 'function(itm,e) {
-                            this.removeFile(itm,e);
-                        }',
-                    ),
-                ),
-            ),
+            'path' => $relativeRootPath.$fileName,
+            'file' => $encFile,
         );
     }
 }

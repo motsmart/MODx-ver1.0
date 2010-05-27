@@ -15,6 +15,10 @@ if (empty($scriptProperties['id'])) return $modx->error->failure($modx->lexicon(
 $chunk = $modx->getObject('modChunk',$scriptProperties['id']);
 if (empty($chunk)) return $modx->error->failure($modx->lexicon('chunk_err_nfs',array('id' => $scriptProperties['id'])));
 
+if (!$chunk->checkPolicy('view')) {
+    return $modx->error->failure($modx->lexicon('access_denied'));
+}
+
 $properties = $chunk->get('properties');
 if (!is_array($properties)) $properties = array();
 
@@ -27,6 +31,7 @@ foreach ($properties as $property) {
         $property['type'],
         $property['options'],
         $property['value'],
+        $property['lexicon'],
         false, /* overridden set to false */
     );
 }

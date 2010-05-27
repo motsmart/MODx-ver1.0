@@ -98,6 +98,17 @@ $xpdo->loadClass('modPrincipal');
 
 $xpdo->log(xPDO::LOG_LEVEL_INFO,'Core transport package created.'); flush();
 
+/* core namespace */
+$namespace = $xpdo->newObject('modNamespace');
+$namespace->set('name','core');
+$namespace->set('path','{core_path}');
+$package->put($namespace,array(
+    xPDOTransport::PRESERVE_KEYS => true,
+    xPDOTransport::UPDATE_OBJECT => true,
+));
+unset($namespace);
+$xpdo->log(xPDO::LOG_LEVEL_INFO,'Core Namespace packaged.'); flush();
+
 /* modWorkspace */
 $collection = array ();
 $collection['1'] = $xpdo->newObject('modWorkspace');
@@ -360,18 +371,21 @@ unset ($fileset, $attributes);
 $xpdo->log(xPDO::LOG_LEVEL_INFO,'Packaged in connectors.'); flush();
 
 /* modEvent collection */
-$collection = array ();
-include dirname(__FILE__).'/data/transport.core.events.php';
-$attributes = array (
-    xPDOTransport::PRESERVE_KEYS => true,
-    xPDOTransport::UPDATE_OBJECT => true,
-    xPDOTransport::UNIQUE_KEY => array ('name'),
-);
-foreach ($collection as $c) {
-    $package->put($c, $attributes);
+$events = include dirname(__FILE__).'/data/transport.core.events.php';
+if (is_array($events) && !empty($events)) {
+    $attributes = array (
+        xPDOTransport::PRESERVE_KEYS => false,
+        xPDOTransport::UPDATE_OBJECT => true,
+        xPDOTransport::UNIQUE_KEY => array ('name'),
+    );
+    foreach ($events as $evt) {
+        $package->put($evt, $attributes);
+    }
+    $xpdo->log(xPDO::LOG_LEVEL_INFO,'Packaged in '.count($events).' default events.'); flush();
+} else {
+    $xpdo->log(xPDO::LOG_LEVEL_FATAL,'Could not find default events!'); flush();
 }
-$xpdo->log(xPDO::LOG_LEVEL_INFO,'Packaged in '.count($collection).' default events.'); flush();
-unset ($collection, $c, $attributes);
+unset ($events, $evt, $attributes);
 
 /* modSystemSetting collection */
 $settings = require_once dirname(__FILE__).'/data/transport.core.system_settings.php';
@@ -466,58 +480,6 @@ foreach ($collection as $c) {
 
 $xpdo->log(xPDO::LOG_LEVEL_INFO,'Packaged in '.count($collection).' default access policies.'); flush();
 unset ($collection, $c, $attributes);
-
-/* modAccessContext */
-$collection = array ();
-include dirname(__FILE__).'/data/transport.core.access_contexts.php';
-$attributes = array (
-    xPDOTransport::PRESERVE_KEYS => false,
-    xPDOTransport::UNIQUE_KEY => array('target', 'principal_class', 'principal'),
-    xPDOTransport::UPDATE_OBJECT => true,
-);
-foreach ($collection as $c) {
-    $package->put($c, $attributes);
-}
-
-$xpdo->log(xPDO::LOG_LEVEL_INFO,'Packaged in '.count($collection).' default access context permissions.'); flush();
-unset ($collection, $c, $attributes);
-
-/* Lexicon stuff */
-$entries = array ();
-$topics = array ();
-$languages = array ();
-$namespace = $xpdo->newObject('modNamespace');
-$namespace->set('name','core');
-$namespace->set('path','{core_path}');
-$package->put($namespace,array(
-    xPDOTransport::PRESERVE_KEYS => true,
-    xPDOTransport::UPDATE_OBJECT => true,
-));
-include dirname(__FILE__).'/data/transport.core.lexicon.php';
-foreach ($topics as $t) {
-    $package->put($t,array (
-        xPDOTransport::PRESERVE_KEYS => false,
-        xPDOTransport::UPDATE_OBJECT => true,
-        xPDOTransport::UNIQUE_KEY => array ('name', 'namespace'),
-        xPDOTransport::RELATED_OBJECTS => true,
-        xPDOTransport::RELATED_OBJECT_ATTRIBUTES => array (
-            'Entries' => array (
-                xPDOTransport::PRESERVE_KEYS => false,
-                xPDOTransport::UPDATE_OBJECT => true,
-                xPDOTransport::UNIQUE_KEY => array ('name', 'topic', 'language'),
-            )
-        )
-    ));
-}
-foreach ($languages as $l) {
-    $package->put($l,array (
-        xPDOTransport::PRESERVE_KEYS => true,
-        xPDOTransport::UPDATE_OBJECT => true,
-    ));
-}
-
-$xpdo->log(xPDO::LOG_LEVEL_INFO,'Packaged core lexicon entries ('.count($entries).') and topics ('.count($topics).').'); flush();
-unset ($entries, $languages, $topics, $c, $t, $l);
 
 /* zip up package */
 $xpdo->log(xPDO::LOG_LEVEL_INFO,'Beginning to zip up transport package...'); flush();

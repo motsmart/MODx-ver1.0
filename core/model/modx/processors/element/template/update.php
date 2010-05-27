@@ -24,6 +24,10 @@ if (empty($scriptProperties['id'])) return $modx->error->failure($modx->lexicon(
 $template = $modx->getObject('modTemplate',$scriptProperties['id']);
 if (!$template) return $modx->error->failure($modx->lexicon('template_err_not_found'));
 
+if (!$template->checkPolicy('save')) {
+    return $modx->error->failure($modx->lexicon('access_denied'));
+}
+
 /* check locked status */
 if ($template->get('locked') && $modx->hasPermission('edit_locked') == false) {
     return $modx->error->failure($modx->lexicon('template_err_locked'));
@@ -53,7 +57,7 @@ $template->set('locked',!empty($scriptProperties['locked']));
 
 /* invoke OnBeforeTempFormSave event */
 $modx->invokeEvent('OnBeforeTempFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $template->get('id'),
     'template' => &$template,
 ));
@@ -79,7 +83,7 @@ if (isset($scriptProperties['tvs'])) {
                 }
                 $templateVarTemplate->set('tmplvarid',$tv['id']);
                 $templateVarTemplate->set('templateid',$template->get('id'));
-                $templateVarTemplate->set('rank',$tv['rank']);
+                $templateVarTemplate->set('rank',$tv['tv_rank']);
                 $templateVarTemplate->save();
             } else {
                 $templateVarTemplate = $modx->getObject('modTemplateVarTemplate',array(
@@ -97,7 +101,7 @@ if (isset($scriptProperties['tvs'])) {
 
 /* invoke OnTempFormSave event */
 $modx->invokeEvent('OnTempFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $template->get('id'),
     'template' => &$template,
 ));

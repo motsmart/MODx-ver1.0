@@ -11,7 +11,6 @@
  * @package modx
  * @subpackage processors.element.snippet
  */
-if (!$modx->hasPermission('view_snippet')) return $modx->error->failure($modx->lexicon('permission_denied'));
 $modx->lexicon->load('snippet');
 
 /* setup default properties */
@@ -31,6 +30,7 @@ $count = $modx->getCount('modSnippet');
 /* iterate through snippets */
 $list = array();
 foreach ($snippets as $snippet) {
+    if (!$snippet->checkPolicy('list')) continue;
     $list[] = $snippet->toArray();
 }
 

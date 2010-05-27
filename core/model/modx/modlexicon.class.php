@@ -119,7 +119,7 @@ class modLexicon {
     public function getCacheKey($namespace = 'core',$topic = 'default',$language = '') {
         if (empty($namespace)) $namespace = 'core';
         if (empty($topic)) $topic = 'default';
-        if (empty($language)) $language = $this->modx->cultureKey;
+        if (empty($language)) $language = $this->modx->getOption('cultureKey',null,'en');
         return 'lexicon/'.$language.'/'.$namespace.'/'.$topic;
     }
 
@@ -153,7 +153,7 @@ class modLexicon {
             } else { /* if namespace, search specified lexicon */
                 $params = explode(':',$topic);
                 if (count($params) <= 2) {
-                    $language = $this->modx->cultureKey;
+                    $language = $this->modx->getOption('cultureKey',null,'en');
                     $namespace = $params[0];
                     $topic_parsed = $params[1];
                 } else {
@@ -181,35 +181,136 @@ class modLexicon {
      * @return array The loaded lexicon array.
      */
     public function loadCache($namespace = 'core', $topic = 'default', $language = '') {
-        if (empty($language)) $language = $this->modx->cultureKey;
+        if (empty($language)) $language = $this->modx->getOption('cultureKey',null,'en');
         $key = $this->getCacheKey($namespace, $topic, $language);
-
-        if (($cached = $this->modx->cacheManager->get($key)) == null) {
+        $enableCache = ($namespace != 'core' && !$this->modx->getOption('cache_noncore_lexicon_topics',null,true)) ? false : true;
+        
+        $cached = $this->modx->cacheManager->get($key);
+        if (!$enableCache || $cached == null) {
             $results= false;
 
-            $c= $this->modx->newQuery('modLexiconEntry');
-            $c->innerJoin('modLexiconTopic','Topic');
-            $c->innerJoin('modNamespace','Namespace','`Namespace`.`name` = `Topic`.`namespace`');
-            $c->where(array(
-                'Topic.name' => $topic,
-                'Namespace.name' => $namespace,
-                'modLexiconEntry.language' => $language,
-            ));
-            $c->sortby('`modLexiconEntry`.`name`','ASC');
+            /* load file-based lexicon */
+            $results = $this->getFileTopic($language,$namespace,$topic);
 
-            if ($entries= $this->modx->getCollection('modLexiconEntry',$c)) {
-                $results= array();
+            /* get DB overrides */
+            $c= $this->modx->newQuery('modLexiconEntry');
+            $c->innerJoin('modNamespace','Namespace');
+            $c->where(array(
+                'modLexiconEntry.topic' => $topic,
+                'modLexiconEntry.language' => $language,
+                'Namespace.name' => $namespace,
+            ));
+            $c->sortby($this->modx->getSelectColumns('modLexiconEntry','modLexiconEntry','',array('name')),'ASC');
+            $entries= $this->modx->getCollection('modLexiconEntry',$c);
+            if (!empty($entries)) {
                 foreach ($entries as $entry) {
                     $results[$entry->get('name')]= $entry->get('value');
                 }
             }
-
-            $cached = $this->modx->cacheManager->generateLexiconTopic($key,$results);
+            if ($enableCache) {
+                $cached = $this->modx->cacheManager->generateLexiconTopic($key,$results);
+            } else {
+                $cached = $results;
+            }
         }
         if (empty($cached)) {
-            $this->modx->log(xPDO::LOG_LEVEL_ERROR, "An error occurred while trying to cache {$key} (lexicon/language/namespace/topic)");
+            $this->modx->log(xPDO::LOG_LEVEL_WARN, "An error occurred while trying to cache {$key} (lexicon/language/namespace/topic)");
         }
         return $cached;
+    }
+
+    /**
+     * Get entries from file-based lexicon topic
+     *
+     * @param string $language The language to filter by.
+     * @param string $namespace The namespace to filter by.
+     * @param string $topic The topic to filter by.
+     * @return array An array of lexicon entries in key - value pairs for the specified filter.
+     */
+    public function getFileTopic($language = 'en',$namespace = 'core',$topic = 'default') {
+        $corePath = $this->getNamespacePath($namespace);
+        $corePath = str_replace(array(
+            '{base_path}',
+            '{core_path}',
+            '{assets_path}',
+        ),array(
+            $this->modx->getOption('base_path'),
+            $this->modx->getOption('core_path'),
+            $this->modx->getOption('assets_path'),
+        ),$corePath);
+        $topicPath = str_replace('//','/',$corePath.'/lexicon/'.$language.'/'.$topic.'.inc.php');
+        $results = array();
+        $_lang = array();
+        if (file_exists($topicPath)) {
+            include $topicPath;
+            $results = $_lang;
+        }
+        return $results;
+    }
+
+    /**
+     * Get the path of the specified Namespace
+     *
+     * @param string $namespace The key of the Namespace
+     * @return string The path for the Namespace
+     */
+    public function getNamespacePath($namespace = 'core') {
+        $corePath = $this->modx->getOption('core_path',null,MODX_CORE_PATH);
+        if ($namespace != 'core') {
+            $namespaceObj = $this->modx->getObject('modNamespace',$namespace);
+            if ($namespaceObj) {
+                $corePath = $namespaceObj->get('path');
+            }
+        }
+        return $corePath;
+    }
+
+    /**
+     * Get a list of available Topics when given a Language and Namespace.
+     *
+     * @param string $language The language to filter by.
+     * @param string $namespace The language to filter by.
+     * @return array An array of Topic names.
+     */
+    public function getTopicList($language = 'en',$namespace = 'core') {
+        $corePath = $this->getNamespacePath($namespace);
+        $lexPath = str_replace('//','/',$corePath.'/lexicon/'.$language.'/');
+
+        $topics = array();
+        if (!is_dir($lexPath)) return $topics;
+        foreach (new DirectoryIterator($lexPath) as $topic) {
+            if (in_array($topic,array('.','..','.svn','_notes'))) continue;
+            if (!$topic->isReadable()) continue;
+
+            if ($topic->isFile()) {
+                $fileName = $topic->getFilename();
+                if (strpos($fileName,'.inc.php')) {
+                    $topics[] = str_replace('.inc.php','',$fileName);
+                }
+            }
+        }
+        return $topics;
+    }
+
+    /**
+     * Get a list of available languages for a Namespace.
+     *
+     * @param string $namespace The Namespace to filter by.
+     * @return array An array of available languages
+     */
+    public function getLanguageList($namespace = 'core') {
+        $corePath = $this->getNamespacePath($namespace);
+        $lexPath = str_replace('//','/',$corePath.'/lexicon/');
+        $languages = array();
+        foreach (new DirectoryIterator($lexPath) as $language) {
+            if (in_array($language,array('.','..','.svn','_notes','country'))) continue;
+            if (!$language->isReadable()) continue;
+
+            if ($language->isDir()) {
+                $languages[] = $language->getFilename();
+            }
+        }
+        return $languages;
     }
 
     /**

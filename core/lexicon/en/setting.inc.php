@@ -17,6 +17,7 @@ $_lang['area_gateway'] = 'Gateway';
 $_lang['area_language'] = 'Lexicon and Language';
 $_lang['area_mail'] = 'Mail';
 $_lang['area_manager'] = 'Back-end Manager';
+$_lang['area_proxy'] = 'Proxy';
 $_lang['area_session'] = 'Session and Cookie';
 $_lang['area_lexicon_string'] = 'Area Lexicon Entry';
 $_lang['area_lexicon_string_msg'] = 'Enter the key of the lexicon entry for the area here. If there is no lexicon entry, it will just display the area key.<br />Core Areas:<ul><li>authentication</li><li>caching</li><li>file</li><li>furls</li><li>gateway</li><li>language</li><li>manager</li><li>session</li><li>site</li><li>system</li></ul>';
@@ -122,6 +123,9 @@ $_lang['setting_cache_lang_js_desc'] = 'If set to true, this will use server hea
 
 $_lang['setting_cache_lexicon_topics'] = 'Cache Lexicon Topics';
 $_lang['setting_cache_lexicon_topics_desc'] = 'When enabled, all Lexicon Topics will be cached so as to greatly reduce load times for Internationalization functionality. MODx strongly recommends leaving this set to \'Yes\'.';
+
+$_lang['setting_cache_noncore_lexicon_topics'] = 'Cache Non-Core Lexicon Topics';
+$_lang['setting_cache_noncore_lexicon_topics_desc'] = 'When disabled, non-core Lexicon Topics will be not be cached. This is useful to disable when developing your own Extras.';
 
 $_lang['setting_cache_resource'] = 'Enable Partial Resource Cache';
 $_lang['setting_cache_resource_desc'] = 'Partial resource caching is configurable by resource when this feature is enabled.  Disabling this feature will disable it globally.';
@@ -276,6 +280,21 @@ $_lang['setting_new_folder_permissions_desc'] = 'When creating a new folder in t
 $_lang['setting_password_generated_length'] = 'Password Auto-Generated Length';
 $_lang['setting_password_generated_length_desc'] = 'The length of the auto-generated password for a User.';
 
+$_lang['setting_proxy_auth_type'] = 'Proxy Authentication Type';
+$_lang['setting_proxy_auth_type_desc'] = 'Supports either BASIC or NTLM.';
+
+$_lang['setting_proxy_host'] = 'Proxy Host';
+$_lang['setting_proxy_host_desc'] = 'If your server is using a proxy, set the hostname here to enable MODx features that might need to use the proxy, such as Package Management.';
+
+$_lang['setting_proxy_password'] = 'Proxy Password';
+$_lang['setting_proxy_password_desc'] = 'The password required to authenticate to your proxy server.';
+
+$_lang['setting_proxy_port'] = 'Proxy Port';
+$_lang['setting_proxy_port_desc'] = 'The port for your proxy server.';
+
+$_lang['setting_proxy_username'] = 'Proxy Username';
+$_lang['setting_proxy_username_desc'] = 'The username to authenticate against with your proxy server.';
+
 $_lang['setting_password_min_length'] = 'Minimum Password Length';
 $_lang['setting_password_min_length_desc'] = 'The minimum length for a password for a User.';
 
@@ -369,6 +388,9 @@ $_lang['setting_site_unavailable_page_err'] = 'Please specify the document ID fo
 
 $_lang['setting_strip_image_paths'] = 'Rewrite browser paths?';
 $_lang['setting_strip_image_paths_desc'] = 'If this is set to \'No\', MODx will write file browser resource src\'s (images, files, flash, etc.) as absolute URLs. Relative URLs are helpful should you wish to move your MODx install, e.g., from a staging site to a production site. If you have no idea what this means, it\'s best just to leave it set to \'Yes\'.';
+
+$_lang['setting_tree_root_id'] = 'Tree Root ID';
+$_lang['setting_tree_root_id_desc'] = 'Set this to a valid ID of a Resource to start the left Resource tree at below that node as the root. The user will only be able to see Resources that are children of the specified Resource.';
 
 $_lang['setting_udperms_allowroot'] = 'Allow root';
 $_lang['setting_udperms_allowroot_desc'] = 'Do you want to allow your users to create new Resources in the root of the site? ';
