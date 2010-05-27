@@ -48,6 +48,7 @@
     <taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="project.classpath" />
     <taskdef name="yuicompress" classname="com.yahoo.platform.yui.compressor.YUICompressTask" classpathref="project.classpath" />
 
+    <!-- =================================
           target: complete
          ================================= -->
     <target name="complete" description="--> Complete Build">
