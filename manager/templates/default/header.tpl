@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" {if $_config.manager_direction EQ 'rtl'}dir="rtl"{/if} lang="{$_config.manager_lang_attribute}" xml:lang="{$_config.manager_lang_attribute}">
 <head>
 <title>MODx :: {$_config.site_name}</title>
@@ -15,7 +15,7 @@
 <script src="{$_config.manager_url}assets/ext3/adapter/ext/ext-base.js" type="text/javascript"></script>
 <script src="{$_config.manager_url}assets/ext3/ext-all.js" type="text/javascript"></script>
 <script src="{$_config.manager_url}assets/modext/{if $_config.compress_js}build/core/modx-min{else}core/modx{/if}.js" type="text/javascript"></script>
-<script src="{$_config.connectors_url}lang.js.php?topic=topmenu,file,resource,{$_lang_topics}&action={$smarty.get.a}" type="text/javascript"></script>
+<script src="{$_config.connectors_url}lang.js.php?ctx=mgr&topic=topmenu,file,resource,{$_lang_topics}&action={$smarty.get.a}" type="text/javascript"></script>
 <script src="{$_config.connectors_url}layout/modx.config.js.php?action={$smarty.get.a}" type="text/javascript"></script>
 
 {foreach from=$cssjs item=scr}
@@ -23,7 +23,7 @@
 {/foreach}
 
 <!--[if IE]>
-<link rel="stylesheet" type="text/css" href="templates/{$_config.manager_theme}/css/ie.css" />
+<link rel="stylesheet" type="text/css" href="{$_config.manager_url}templates/{$_config.manager_theme}/css/ie.css" />
 <![endif]-->
 </head>
 <body id="modx-body-tag">
@@ -41,7 +41,7 @@
         <div id="rightlogin">
         <span>
             <a class="modx-logout" href="javascript:;" onclick="MODx.logout();">{$_lang.logout}</a>
-            {$logged_in_as}
+            <a id="modx-login-user" href="?a={$profileAction}">{$username}</a>
         </span>
         </div>
         {include file="navbar.tpl"}

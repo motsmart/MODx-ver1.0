@@ -35,13 +35,20 @@
  * @subpackage filters
  */
 class modOutputFilter {
-    var $modx= null;
+    public $modx= null;
 
     function __construct(modX &$modx) {
         $this->modx= &$modx;
     }
 
+    /**
+     * Filters the output
+     * 
+     * @param mixed $element The element to filter
+     */
     public function filter(&$element) {
+        $usemb = function_exists('mb_strlen') && (boolean)$this->modx->getOption('use_multibyte',null,false);
+        $encoding = $this->modx->getOption('modx_charset',null,'UTF-8');
 
         $output= & $element->_output;
         if (isset ($element->_properties['filter_commands'])) {
@@ -174,35 +181,50 @@ class modOutputFilter {
                     case 'lowercase':
                     case 'strtolower':
                         /* See PHP's strtolower - http://www.php.net/manual/en/function.strtolower.php */
-                        $output= strtolower($output);
+                        $output = $usemb ? mb_strtolower($output) : strtolower($output);
                         break;
                     case 'ucase':
                     case 'uppercase':
                     case 'strtoupper':
                         /* See PHP's strtoupper - http://www.php.net/manual/en/function.strtoupper.php */
-                        $output= strtoupper($output);
+                        $output = $usemb ? mb_strtolower($output,$encoding) : strtoupper($output);
                         break;
                     case 'ucwords':
                         /* See PHP's ucwords - http://www.php.net/manual/en/function.ucwords.php */
-                        $output= ucwords($output);
+                        $output = $usemb ? mb_convert_case($output,MB_CASE_TITLE,$encoding) : ucwords($output);
                         break;
                     case 'ucfirst':
                         /* See PHP's ucfirst - http://www.php.net/manual/en/function.ucfirst.php */
-                        $output= ucfirst($output);
+                        if ($usemb) {
+                            $output = mb_strtoupper(mb_substr($output,0,1)) . mb_substr($output, 1);
+                        } else {
+                            $output = ucfirst($output);
+                        }
                         break;
                     case 'htmlent':
                     case 'htmlentities':
                         /* See PHP's htmlentities - http://www.php.net/manual/en/function.htmlentities.php */
-                        $output= htmlentities($output, ENT_QUOTES, $this->modx->getOption('modx_charset'));
+                        $output = htmlentities($output,ENT_QUOTES,$encoding);
                         break;
                     case 'esc':
                     case 'escape':
-                        $output= preg_replace("/&amp;(#[0-9]+|[a-z]+);/i", "&$1;", htmlspecialchars($output));
-                        $output= str_replace(array ("[", "]", "`"), array ("&#91;", "&#93;", "&#96;"), $output);
+                        $output = preg_replace("/&amp;(#[0-9]+|[a-z]+);/i", "&$1;", htmlspecialchars($output));
+                        $output = str_replace(array ("[", "]", "`"), array ("&#91;", "&#93;", "&#96;"), $output);
                         break;
                     case 'strip':
                         /* Replaces all linebreaks, tabs and multiple spaces with just one space */
                         $output= preg_replace("/\s+/"," ",$output);
+                        break;
+                    case 'stripString':
+                        /* strips string of this value */
+                        $output= str_replace($m_val,'',$output);
+                        break;
+                    case 'replace':
+                        /* replaces one value with another */
+                        $opt = explode('==',$m_val);
+                        if (count($opt) >= 2) {
+                            $output = str_replace($opt[0],$opt[1],$output);
+                        }
                         break;
                     case 'notags':
                     case 'striptags':
@@ -219,12 +241,18 @@ class modOutputFilter {
                     case 'len':
                     case 'strlen':
                         /* See PHP's strlen - http://www.php.net/manual/en/function.strlen.php */
-                        $output= strlen($output);
+                        $output = $usemb ? mb_strlen($output,$encoding) : strlen($output);
                         break;
                     case 'reverse':
                     case 'strrev':
                         /* See PHP's strrev - http://www.php.net/manual/en/function.strrev.php */
-                        $output= strrev($output);
+                        if ($usemb) {
+                            $ar = array();
+                            preg_match_all('/(\d+)?./us', $output, $ar);
+                            $output = join('',array_reverse($ar[0]));
+                        } else {
+                            $output = strrev($output);
+                        }
                         break;
                     case 'wordwrap':
                         /* See PHP's wordwrap - http://www.php.net/manual/en/function.wordwrap.php */
@@ -247,11 +275,20 @@ class modOutputFilter {
                     case 'limit':
                         /* default: 100 */
                         $limit= intval($m_val) ? intval($m_val) : 100;
-                        $output= substr($output, 0, $limit);
+                        if ($usemb) {
+                            $output= mb_substr($output,0,$limit,$encoding);
+                        } else {
+                            $output= substr($output,0,$limit);
+                        }
                         break;
                     case 'ellipsis':
                         $limit= intval($m_val) ? intval($m_val) : 100;
-                        if (strlen($output) > $limit) {
+
+                        if ($usemb) {
+                            if (mb_strlen($output,$encoding) > $limit) {
+                                $output = mb_substr($output,0,$limit,$encoding);
+                            }
+                        } else if (strlen($output) > $limit) {
                             $output = substr($output,0,$limit).'...';
                         }
                         break;
@@ -260,7 +297,7 @@ class modOutputFilter {
                     case 'tag':
                         /* Displays the raw element tag without :tag */
                         $tag = $element->_tag;
-                        $tag = htmlentities($tag, ENT_QUOTES, $this->modx->getOption('modx_charset'));
+                        $tag = htmlentities($tag,ENT_QUOTES,$encoding);
                         $tag = str_replace(array ("[", "]", "`"), array ("&#91;", "&#93;", "&#96;"), $tag);
                         $tag = str_replace(":tag","",$tag);
                         $output = $tag;
@@ -358,10 +395,99 @@ class modOutputFilter {
                             $output = '';
                         }
                         break;
+                    case 'fuzzydate':
+                        /* displays a "fuzzy" date reference */
+                        if (empty($this->modx->lexicon)) $this->modx->getService('lexicon','modLexicon');
+                        $this->modx->lexicon->load('filters');
+                        if (empty($m_val)) $m_val= '%b %e';
+                        if (!empty($output)) {
+                            $time = strtotime($output);
+                            if ($time >= strtotime('today')) {
+                                $output = $this->modx->lexicon('today_at',array('time' => strftime('%I:%M %p',$time)));
+                            } elseif ($time >= strtotime('yesterday')) {
+                                $output = $this->modx->lexicon('yesterday_at',array('time' => strftime('%I:%M %p',$time)));
+                            } else {
+                                $output = strftime($m_val, $time);
+                            }
+                        } else {
+                            $output = '&mdash;';
+                        }
+                        break;
+                    case 'ago':
+                        /* calculates relative time ago from a timestamp */
+                        if (empty($output)) break;
+                        if (empty($this->modx->lexicon)) $this->modx->getService('lexicon','modLexicon');
+                        $this->modx->lexicon->load('filters');
 
+                        $agoTS = array();
+                        $uts['start'] = strtotime($output);
+                        $uts['end'] = time();
+                        if( $uts['start']!==-1 && $uts['end']!==-1 ) {
+                          if( $uts['end'] >= $uts['start'] ) {
+                            $diff = $uts['end'] - $uts['start'];
+
+                            $years = intval((floor($diff/31536000)));
+                            if ($years) $diff = $diff % 31536000;
+
+                            $months = intval((floor($diff/2628000)));
+                            if ($months) $diff = $diff % 2628000;
+
+                            $weeks = intval((floor($diff/604800)));
+                            if ($weeks) $diff = $diff % 604800;
+
+                            $days = intval((floor($diff/86400)));
+                            if ($days) $diff = $diff % 86400;
+
+                            $hours = intval((floor($diff/3600)));
+                            if ($hours) $diff = $diff % 3600;
+
+                            $minutes = intval((floor($diff/60)));
+                            if ($minutes) $diff = $diff % 60;
+
+                            $diff = intval($diff);
+                            $agoTS = array(
+                              'years' => $years,
+                              'months' => $months,
+                              'weeks' => $weeks,
+                              'days' => $days,
+                              'hours' => $hours,
+                              'minutes' => $minutes,
+                              'seconds' => $diff,
+                            );
+                          }
+                        }
+
+                        $ago = array();
+                        if (!empty($agoTS['years'])) {
+                          $ago[] = $this->modx->lexicon(($agoTS['years'] > 1 ? 'ago_years' : 'ago_year'),array('time' => $agoTS['years']));
+                        }
+                        if (!empty($agoTS['months'])) {
+                          $ago[] = $this->modx->lexicon(($agoTS['months'] > 1 ? 'ago_months' : 'ago_month'),array('time' => $agoTS['months']));
+                        }
+                        if (!empty($agoTS['weeks']) && empty($agoTS['years'])) {
+                          $ago[] = $this->modx->lexicon(($agoTS['weeks'] > 1 ? 'ago_weeks' : 'ago_week'),array('time' => $agoTS['weeks']));
+                        }
+                        if (!empty($agoTS['days']) && empty($agoTS['months']) && empty($agoTS['years'])) {
+                          $ago[] = $this->modx->lexicon(($agoTS['days'] > 1 ? 'ago_days' : 'ago_day'),array('time' => $agoTS['days']));
+                        }
+                        if (!empty($agoTS['hours']) && empty($agoTS['weeks']) && empty($agoTS['months']) && empty($agoTS['years'])) {
+                          $ago[] = $this->modx->lexicon(($agoTS['hours'] > 1 ? 'ago_hours' : 'ago_hour'),array('time' => $agoTS['hours']));
+                        }
+                        if (!empty($agoTS['minutes']) && empty($agoTS['days']) && empty($agoTS['weeks']) && empty($agoTS['months']) && empty($agoTS['years'])) {
+                          $ago[] = $this->modx->lexicon('ago_minutes',array('time' => $agoTS['minutes']));
+                        }
+                        if (empty($ago)) { /* handle <1 min */
+                          $ago[] = $this->modx->lexicon('ago_seconds',array('time' => $agoTS['seconds']));
+                        }
+                        $output = implode(', ',$ago);
+                        $output = $this->modx->lexicon('ago',array('time' => $output));
+                        break;
                     case 'md5':
                         /* See PHP's md5 - http://www.php.net/manual/en/function.md5.php */
                         $output= md5($output);
+                        break;
+                    case 'cdata':
+                        $output= "<![CDATA[ {$output} ]]>";
                         break;
 
                     case 'userinfo':

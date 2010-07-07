@@ -93,7 +93,7 @@ MODx.panel.Snippet = function(config) {
                 ,id: 'modx-snippet-snippet'
                 ,width: '95%'
                 ,height: 400
-                ,value: "<?php\n\n?>"
+                ,value: "<?php"
                 
             }]
         },{
@@ -110,12 +110,11 @@ MODx.panel.Snippet = function(config) {
         }
     });
     MODx.panel.Snippet.superclass.constructor.call(this,config);
-    setTimeout("Ext.getCmp('modx-element-tree').expand();",1000);
 };
 Ext.extend(MODx.panel.Snippet,MODx.FormPanel,{
     initialized: false
     ,setup: function() {
-        if (this.config.snippet === '' || this.config.snippet === 0 || this.initialized) {       
+        if (this.config.snippet === '' || this.config.snippet === 0 || this.initialized) {
             this.fireEvent('ready');
             return;
         }
@@ -131,13 +130,15 @@ Ext.extend(MODx.panel.Snippet,MODx.FormPanel,{
                     r.object.snippet = "<?php\n"+r.object.snippet+"\n?>";
                     this.getForm().setValues(r.object);
                     Ext.getCmp('modx-snippet-header').getEl().update('<h2>'+_('snippet')+': '+r.object.name+'</h2>');
-                    this.clearDirty();
-                    this.fireEvent('ready',r.object);
                     
                     var d = Ext.decode(r.object.data);
                     var g = Ext.getCmp('modx-grid-element-properties');
                     g.defaultProperties = d;
                     g.getStore().loadData(d);
+
+                    if (MODx.onLoadEditor) { MODx.onLoadEditor(this); }
+                    this.fireEvent('ready',r.object);
+                    this.clearDirty();
                     this.initialized = true;
                 },scope:this}
             }

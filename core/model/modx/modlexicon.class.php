@@ -57,6 +57,12 @@ class modLexicon {
      * @access protected
      */
     protected $_paths = array();
+    /**
+     * An array of loaded topic strings
+     * 
+     * @var array $_loadedTopics
+     */
+    protected $_loadedTopics = array();
 
     /**
      * Creates the modLexicon instance.
@@ -101,9 +107,21 @@ class modLexicon {
      * Accessor method for the lexicon array.
      *
      * @access public
+     * @param string $prefix If set, will only return the lexicon entries with this prefix.
+     * @param boolean If true, will strip the prefix from the returned indexes
      * @return array The internal lexicon.
      */
-    public function fetch() {
+    public function fetch($prefix = '',$removePrefix = false) {
+        if (!empty($prefix)) {
+            $lex = array();
+            foreach ($lang as $k => $v) {
+                if (strpos($k,$prefix) !== false) {
+                    $key = $removePrefix ? str_replace($prefix,'',$k) : $k;
+                    $lex[$key] = $v;
+                }
+            }
+            return $lex;
+        }
         return $this->_lexicon;
     }
 
@@ -137,10 +155,11 @@ class modLexicon {
     public function load() {
         $topics = func_get_args(); /* allow for dynamic number of lexicons to load */
 
-        foreach ($topics as $topic) {
-            if (!is_string($topic) || $topic == '') return false;
-            $nspos = strpos($topic,':');
-            $topic = str_replace('.','/',$topic); /** @deprecated 2.0.0 Allow for lexicon subdirs */
+        foreach ($topics as $topicStr) {
+            if (!is_string($topicStr) || $topicStr == '') continue;
+            if (in_array($topicStr,$this->_loadedTopics)) continue;
+            $nspos = strpos($topicStr,':');
+            $topic = str_replace('.','/',$topicStr); /** @deprecated 2.0.0 Allow for lexicon subdirs */
 
             /* if no namespace, search all lexicons */
             if ($nspos === false) {
@@ -164,6 +183,7 @@ class modLexicon {
 
                 $entries = $this->loadCache($namespace,$topic_parsed,$language);
                 if (is_array($entries)) {
+                    $this->_loadedTopics[] = $topicStr;
                     $this->_lexicon = is_array($this->_lexicon) ? array_merge($this->_lexicon, $entries) : $entries;
                 }
             }
@@ -191,6 +211,12 @@ class modLexicon {
 
             /* load file-based lexicon */
             $results = $this->getFileTopic($language,$namespace,$topic);
+            if ($results === false) { /* default back to en */
+                $results = $this->getFileTopic('en',$namespace,$topic);
+                if ($results === false) {
+                    $results = array();
+                }
+            }
 
             /* get DB overrides */
             $c= $this->modx->newQuery('modLexiconEntry');
@@ -244,6 +270,8 @@ class modLexicon {
         if (file_exists($topicPath)) {
             include $topicPath;
             $results = $_lang;
+        } else {
+            return false;
         }
         return $results;
     }

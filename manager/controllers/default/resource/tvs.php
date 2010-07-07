@@ -21,7 +21,12 @@ if (file_exists($delegateView)) {
 }
 
 $templateId = 0;
-$categories = $modx->getCollection('modCategory');
+
+/* get categories */
+$c = $modx->newQuery('modCategory');
+$c->sortby('category','ASC');
+$categories = $modx->getCollection('modCategory',$c);
+
 $emptycat = $modx->newObject('modCategory');
 $emptycat->set('category','uncategorized');
 $emptycat->id = 0;
@@ -69,6 +74,21 @@ if ($templateId && ($template = $modx->getObject('modTemplate', $templateId))) {
         }
     }
 }
+
+$onResourceTVFormRender = $modx->invokeEvent('OnResourceTVFormRender',array(
+    'categories' => &$categories,
+    'template' => $templateId,
+    'resource' => $resourceId,
+));
+if (is_array($onResourceTVFormRender)) {
+    $onResourceTVFormRender = implode('',$onResourceTVFormRender);
+}
+$modx->smarty->assign('OnResourceTVFormRender',$onResourceTVFormRender);
+
 $modx->smarty->assign('categories',$categories);
+
+if (!empty($_REQUEST['showCheckbox'])) {
+    $modx->smarty->assign('showCheckbox',1);
+}
 
 return $modx->smarty->fetch('resource/sections/tvs.tpl');

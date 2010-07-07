@@ -2,9 +2,117 @@
 This file shows the changes in recent releases of MODx. The most current release is usually the 
 development release, and is only shown to give an idea of what's currently in the pipeline.
 
-MODx Revolution 2.0.0-rc-2 ($LastChangedRevision$, $LastChangedDate$)
+MODx Revolution 2.0.0-rc-3 ($LastChangedRevision$, $LastChangedDate$)
 ====================================
-- Fixed copy-prepared-css build.xml command to prepare for 2.0.0-rc-2 release
+- Fixed UI issue with Namespace path being unwantingly translated
+- Upped timeout on setup settings cache to 10 minutes; was far too short
+- [#MODX-2040] Fixed bug with setProperties and merge argument
+- Slight tweaks to phpthumb default config
+- Added sanity check when using multiple TV render directories
+- [#MODX-2100] Fixed content type creation for binary type bug, bug in build with regards to content types
+- Added flag to setup to fix proceeding error after install
+- Fixed setup to return setup process to very beginning when settings timeout, avoiding various errors about classes not being found
+- Added modx-tv-checkbox class to resource TV checkboxes for easier DOM manip
+- Added showCheckbox setting for resource TVs display to allow for extensibility and TV targeting
+- Added phpThumb specific settings
+- Added OnResourceTVFormRender event for affecting TV displays on resources
+- [#MODX-2104] Auto-detect correct value and set use_multibyte on new installs
+- [#MODX-2104] Added 'use_multibyte' setting that allows for use of mb_* functions for multibyte characters; fixes bug with MB chars in output filters
+- [#MODX-2019] Added default Element policy
+- Fixed issue with Ext.form.BasicForm and prior commit, adjust else/if condition
+- Added headers check to all Ajax requests to connectors to require unique site ID header to harden security
+- Added modx-content-above and modx-content-below divs for RTE usage
+- [#MODX-2008] Updated Russian translation
+- Enabled RTEs to be used on TV default value field
+- Added which_element_editor setting, which allows for usage of multiple RTEs for Elements vs Resources
+- Fixed bug with custom_resource_classes setting implementation on blank values
+- [#MODX-2094] Enabled Packages to be able to have their Provider changed
+- [#MODX-1809] Added manager_time_format to allow changing of time formats in mgr widgets
+- Added extra var to pass revo version in transport provider requests; helps with download metrics and version checking
+- Optimized package grid by moving menus to JS
+- Fixed issue where manager_language setting was being ignored in mgr connectors
+- Enhance security on language string loader
+- [#MODX-1834] Adjusted color on Yes/No on packages grid to more reflect intent
+- Readjust JS firing timing for Elements to prevent RTE timing errors in faster browsers
+- [#MODX-2090] Added auto_check_pkg_updates_cache_expire setting, which caches package update checks in Package Management to speed up grid load times
+- Ensure Resource pages using RTEs always have save btn enabled
+- Fixes to RTE loading in Element panes, other issues regarding timing of plugin firing
+- Fixed bug with area listings in combo in system settings
+- [#MODX-1961] Fixed bug with octal perms when creating directories in the admin
+- [#MODX-1527] Fixed bugs in admin confirm password field on install
+- Fixed Package Management in IE8
+- Styling improvements
+- Fixed IE issue on navbar, few other tweaks to package management for IE
+- [#MODX-2032] Fixed topic varchar length issue with UTF-8 installs
+- [#MODX-1612] Added Create Menu context menu on root node for menus tree
+- [#MODX-2020] Ensure error when creating duplicate context ACLs shows
+- Tweaks to Package Management browser JS to allow for more consistent rendering
+- [#MODX-2051] Stripped tags from TV description field on input rendering
+- Added 'custom_resource_classes' setting, which allows you to specify custom resource types for the resource tree
+- Tweaked FC tvMove rule to be more consistent with values of other TV FC rules
+- Allow blank names (not keys) in Settings create/update windows; tweaks to query in package management grid
+- [#MODX-1737] Container resources can now have names specified on duplicate
+- [#MODX-2074] Fixed bug where property descriptions were not i18n-able
+- [#MODX-2062] Date TV type now can store time; updated datetime ExtJS xtype to latest version
+- [#MODX-2046] Added 'collapse' toggle to left trees, shortened username on top right to allow for small resolutions
+- [#MODX-2067] Fixed bug with cleanAlias and a non-existent lexicon string
+- [#MODX-2086] Fixed a few bugs in package management styling
+- Tweaks to context menu styling
+- [#MODX-2078] Context menus now show under cursor
+- [#MODX-2083] Fixed bug where setting editedon was returning invalid date
+- [#MODX-2061] Fixed erroneous lexicon entry for cache_handler setting description
+- [#MODX-2085] Fixed issue with namespace path not being translated on get
+- Added ability to activate/deactivate FC rules from context menu
+- fieldVisible, fieldLabel, tvVisible, tvMove Form Customization rules now support multiple fields via comma-sep list
+- Added functionality to Form Customization to add new Tabs and move TVs to other tabs
+- Applied CSS gradient styling to grids, tabs
+- [#MODX-2056] Fixed CSS for topmenu, restyled to add contrast and enhanced
+- Cleaned up TV display panel, removed TV reload button, extended fields all the way across
+- [#MODX-1832] moved "Set to Default" to a fade-in icon
+- Prepared code for oncoming feature to move TVs into other tabs
+- Removed credits from about pane, consolidated tabs
+- Fixed permissions checks on resource tree context menu when policies are limited
+- Added prefix filtering to modLexicon::fetch
+- Added modTemplateVar::getDisplayParams for easier fetching of display_params for a TV
+- Fixed bug with custom TV render paths
+- Added phpThumb to core, added connector for secure access, integrated into MODx.Browser
+- Ensure categories in TV panel are sorted alphanumerically
+- Added stripString, cdata, replace, fuzzydate and ago output filters
+- [#MODX-2045] Added ExtJS, Smarty, PHPMailer, MagpieRSS version into System info
+- [#MODX-2057] Fixed bugs with action/menu trees
+- Fixed bug with is_writable check in setup; was checking core/config rather than just core/config/config.inc.php
+- [#MODX-2042] Fixed extra beginning slash for image/file TVs
+- Add validation to processors for Chunks, Plugins, Snippets, and Template Variables
+- [#MODX-1998] Disallow reserved Template Variable names (i.e. Resource field names)
+- [#MODX-2033] Fix bug with unchecking Template Variable access when editing a Template
+- Have modX::switchContext() update placeholders from config on successful switch
+- [#MODX-1774] Remove redundant setting of placeholders from modX::$config in modRequest::handleRequest()
+- [#MODX-2031] Fix modX::stripTags() and modX::sanitize() to properly strip nested element tags
+- [#MODX-2027] Added icon to file tree to show MODx Browser, for a different view on file management
+- [#MODX-1924] Made more precise the cursor pointer change on buttons in mgr
+- [#MODX-1904] Fixed bug with phx placeholders in modTranslate095 class
+- [#MODX-1535] Fixed bug with transparent background for grid-based comboboxes
+- [#MODX-1904] Fixed bug with phx placeholders in modParser095 class
+- [#MODX-1936] Lexicons now fallback to English if no translation is found for specified language
+- [#MODX-1781] Fixed z-index issue with top nav and window masks
+- [#MODX-217] Added create element type icons for Element tree
+- [#MODX-217] Added directory create icon to file tree toolbar, changed upload files button to icon
+- [#MODX-2022] Fixed bug regarding php file permissions and writable checks
+- Fixed bugs related to loading of RTEs for TVs in derivative resource classes
+- Enhanced image TV to show preview of image, adjusted to display below
+- [#MODX-2015] Added sanity check to prevent users from dragging Resources to a non-existent context
+- [#MODX-2013] Fixed bug where hiding fields with Form Customization would disable them from being sent
+- Fixed bugs with System Settings grid due to erroneous merge in UI styling
+- [#MODX-2012] Made Form Customization grid sortable
+- [#MODX-2011] Fixed MODx.grid.Grid::getSelectedAsList to work in Fx,IE
+- Added more sophisticated check for writable directories in setup to ensure compatibility across environments
+- Fixed bug where manager_language setting was ignored
+- [#MODX-2007] Redirect to requested mgr page when logging in
+- Adjusted version for RC-3 development
+
+MODx Revolution 2.0.0-rc-2 (LastChangedRevision: 6924, LastChangedDate: 2010-05-27 15:56:51 -0500 (Thu, 27 May 2010))
+====================================
+- Fixed copy-prepared-css command in build.xml to prepare for rc-2 release
 - Adjusted welcome screen URL to go to a non-release specific confluence page
 - [#MODX-2000] Fixed FC rule to apply to template fields by overriding in controller
 - [#MODX-2000] Add ability to specify a template in REQUEST or alter via plugin in resource/create controller

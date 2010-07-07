@@ -123,15 +123,15 @@ MODx.panel.TV = function(config) {
                     ,name: 'els'
                     ,id: 'modx-tv-elements'
                     ,itemId: 'fld-els'
-                    ,width: 250
+                    ,anchor: '90%'
                 },{
                     xtype: 'textarea'
                     ,fieldLabel: _('tv_default')
                     ,name: 'default_text'
                     ,id: 'modx-tv-default-text'
                     ,itemId: 'fld-default_text'
-                    ,width: 300
-                    ,grow: true
+                    ,anchor: '90%'
+                    ,height: 200
                 },{
                     xtype: 'modx-combo-tv-widget'
                     ,fieldLabel: _('tv_output_type')
@@ -222,21 +222,22 @@ Ext.extend(MODx.panel.TV,MODx.FormPanel,{
                     if (r.object.category == '0') { r.object.category = null; }
                     this.getForm().setValues(r.object);
                     this.getComponent('header').getEl().update('<h2>'+_('tv')+': '+r.object.name+'</h2>');
-                    
-                    this.clearDirty();
-                    this.fireEvent('ready',r.object);
 
                     var d = Ext.decode(r.object.data);
                     var g = this.getComponent('tabs').getComponent('panel-properties').getComponent('grid-properties');
                     g.defaultProperties = d;
                     g.getStore().loadData(d);
-                    this.initialized = true;
                     
                     var sv = function(vs) { this.getForm().setValues(vs); };
                     sv.defer(1300,this,[r.object]);
                     
                     var dis = this.getComponent('tabs').getComponent('form-tv').getComponent('fs-rendering').getComponent('fld-display');
                     this.showParameters(dis);
+
+                    if (MODx.onLoadEditor) { MODx.onLoadEditor(this); }
+                    this.fireEvent('ready',r.object);
+                    this.clearDirty();
+                    this.initialized = true;
                 },scope:this}
             }
         });
@@ -248,6 +249,11 @@ Ext.extend(MODx.panel.TV,MODx.FormPanel,{
             templates: g.encodeModified()
             ,resource_groups: rg.encodeModified()
             ,propdata: Ext.getCmp('modx-grid-element-properties').encode()
+        });
+        this.cleanupEditor();
+        return this.fireEvent('save',{
+            values: this.getForm().getValues()
+            ,stay: MODx.config.stay
         });
     }
     ,success: function(r) {
@@ -280,6 +286,16 @@ Ext.extend(MODx.panel.TV,MODx.FormPanel,{
             });
         } catch(e) { console.log(e); }
         
+    }
+    ,changeEditor: function() {
+        this.cleanupEditor();
+        this.submit();
+    }
+    ,cleanupEditor: function() {
+        if (MODx.onSaveEditor) {
+            var fld = Ext.getCmp('modx-tv-default-text');
+            MODx.onSaveEditor(fld);
+        }
     }
 });
 Ext.reg('modx-panel-tv',MODx.panel.TV); 

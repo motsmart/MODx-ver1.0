@@ -142,7 +142,8 @@ ul.x-tab-strip-bottom{
 
 .x-tab-strip span.x-tab-strip-text {
     font: normal 11px arial, tahoma, helvetica;
-    color: #ffffff;
+    /*color: #ffffff;*/
+    cursor: pointer;
 }
 
 .x-tab-strip-over span.x-tab-strip-text {
@@ -151,13 +152,14 @@ ul.x-tab-strip-bottom{
 }
 
 .x-tab-strip span.x-tab-strip-text {
-    text-shadow: -1px -1px 0 #6F6F6F;
+    text-shadow: 0 1px 0 #6F6F6F;
+    color: #eee;
 }
 
 .x-tab-strip-active span.x-tab-strip-text {
-    color: #ffffff;
     font-weight: bold;
-    text-shadow: -1px -1px 0 #1F1F1F;
+    color: #eee;
+    text-shadow:0 -1px 1px #1f1f1f;
 }
 
 .x-tab-strip-disabled .x-tabs-text {
@@ -183,6 +185,26 @@ ul.x-tab-strip li.x-tab-strip-over {
 ul.x-tab-strip li.x-tab-strip-active  {
     background-color: #5e5e5e;
     border-color: #5E5E5E;
+}
+
+.ext-gecko #modx-content ul.x-tab-strip li.x-tab-strip-active {
+    background: -moz-linear-gradient(
+        center bottom,
+        rgb(102,102,102) 27%,
+        rgb(119,119,119) 50%,
+        rgb(102,102,102) 0%
+    );
+}
+
+.ext-safari #modx-content ul.x-tab-strip li.x-tab-strip-active, .ext-webkit #modx-content ul.x-tab-strip li.x-tab-strip-active {
+    background: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.27, rgb(102,102,102)),
+        color-stop(0.50, rgb(119,119,119)),
+        color-stop(0, rgb(102,102,102))
+    );
 }
 
 .x-tab-strip-top .x-tab-right, .x-tab-strip-top .x-tab-left, .x-tab-strip-top .x-tab-strip-inner {
@@ -306,7 +328,10 @@ ul.x-tab-strip li.x-tab-strip-active  {
     background-position: -34px 0 !important;
 }
 
-
+/* fix combo on grid editor bug */
+.x-grid-editor .x-form-field-wrap {
+    background-color: white !important;
+}
 
 .x-small-editor .x-form-field-wrap .x-form-trigger{
     width: 26px;
@@ -319,7 +344,7 @@ ul.x-tab-strip li.x-tab-strip-active  {
     width: 29px;
 }
 .x-form-field-wrap {
-    background: transparent url(../images/modx-theme/form/combo-bck.png) repeat-x scroll 0 bottom
+    background: transparent url(../images/modx-theme/form/combo-bck.png) repeat-x scroll 0 bottom;
 }
 
 .x-form-field-wrap .x-form-date-trigger{
@@ -429,6 +454,7 @@ ul.x-tab-strip li.x-tab-strip-active  {
     line-height: 1;
     margin: 0 0 1px 0;
     padding: 1px;
+    cursor: default;
 }
 
 #modAB .x-btn {
@@ -701,7 +727,9 @@ ul.x-tab-strip li.x-tab-strip-active  {
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
-    border: 3px solid #5F5F5F;
+    /*border: 3px solid #5F5F5F;*/
+    border: 2px solid #666;
+
 }
 
 .x-grid-panel .x-panel-mc .x-panel-body {
@@ -767,10 +795,30 @@ ul.x-tab-strip li.x-tab-strip-active  {
     text-transform: uppercase;
     padding: 3px 0;
 }
+.ext-gecko .x-grid3-header {
+    background: -moz-linear-gradient(
+        center bottom,
+        rgb(102,102,102) 27%,
+        rgb(119,119,119) 50%,
+        rgb(102,102,102) 0%
+    );
+}
+
+.ext-safari .x-grid3-header, .ext-webkit .x-grid3-header {
+    background: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.39, rgb(112,112,112)),
+        color-stop(0.67, rgb(129,129,129)),
+        color-stop(0, rgb(112,112,112))
+    );
+}
 
 .x-grid3-header .x-grid3-cell-inner,.x-grid3-header  .x-grid3-hd-inner {
+    color: #ddd;
     font-weight: bold;
-    text-shadow: 1px -1px 0 #3f3f3f;
+    text-shadow: 0 -1px 0 #3f3f3f;
 }
 
 .x-grid3-header-pop {
@@ -1348,9 +1396,12 @@ td.x-date-mp-sep {
     background-image: url(../images/modx-theme/qtip/tip-anchor-sprite.gif);
 }
 .x-menu {
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
     border-color: #898989;
-    background-color: #f0f0f0;
     background-image: url(../images/modx-theme/menu/menu.gif);
+    background-color: #f7f7f7;
 }
 
 .x-menu-nosep {
@@ -1358,7 +1409,8 @@ td.x-date-mp-sep {
 }
 
 .x-menu-list-item{
-    font: normal 11px arial,tahoma, sans-serif;
+    font: normal 11px/1 arial,tahoma,verdana,sans-serif;
+    
 }
 
 .x-menu-item-arrow{
@@ -1375,9 +1427,8 @@ a.x-menu-item {
 }
 
 .x-menu-item-active {
-    background-color: #e9e9e9;
-    background-image: url(../images/modx-theme/menu/item-over.gif);
     border-color: #c8c8c8;
+    background: #efefef url(../images/modx-theme/form/button-bg.png) repeat-x scroll 0 0;
 }
 
 .x-menu-item-active a.x-menu-item {
@@ -1675,7 +1726,8 @@ a.x-menu-item {
     background: transparent url(../images/modx-theme/window/border.png) repeat scroll 0 0;
     z-index: 10000 !important;
 }
-.x-window-tl .x-window-header {
+.x-window-tl .x-window-header,
+.x-panel-header {
     -moz-border-radius-topleft: 2px;
     -moz-border-radius-topright: 2px;
     -webkit-border-top-left-radius: 2px;
@@ -1686,17 +1738,15 @@ a.x-menu-item {
     background-image: none;
     border-bottom: 1px solid #FFFFFF;
     color: #5E5E5E;
-    font-family: arial,tahoma,verdana,sans-serif;
-    font-size: 1.2em;
-    font-size-adjust: none;
-    font-stretch: normal;
-    font-style: normal;
-    font-variant: normal;
-    font-weight: bold;
-    line-height: normal;
+    font: bold 1.2em arial,tahoma,verdana,sans-serif;
     margin-top: 9px;
     padding: 8px 15px;
     text-shadow: 0 1px 1px #FFFFFF;
+}
+.x-panel-header {
+    padding: 5px 3px 2px 5px;
+    font-size: 12px;
+    margin-top: 0;
 }
 
 .x-window-tc {

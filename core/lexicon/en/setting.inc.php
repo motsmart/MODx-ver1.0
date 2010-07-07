@@ -77,6 +77,9 @@ $_lang['setting_auto_menuindex_desc'] = 'Select \'Yes\' to turn on automatic men
 $_lang['setting_auto_check_pkg_updates'] = 'Automatic Check for Package Updates';
 $_lang['setting_auto_check_pkg_updates_desc'] = 'If \'Yes\', MODx will automatically check for updates for packages in Package Management. This may slow the loading of the grid.';
 
+$_lang['setting_auto_check_pkg_updates_cache_expire'] = 'Cache Expiration Time for Automatic Package Updates Check';
+$_lang['setting_auto_check_pkg_updates_cache_expire_desc'] = 'The number of minutes that Package Management will cache the results for checking for package updates.';
+
 $_lang['setting_allow_multiple_emails'] = 'Allow Duplicate Emails for Users';
 $_lang['setting_allow_multiple_emails_desc'] = 'If enabled, Users may share the same email address.';
 
@@ -116,7 +119,7 @@ $_lang['setting_cache_json_expires'] = 'Expiration Time for JSON Cache';
 $_lang['setting_cache_json_expires_desc'] = 'This value (in seconds) sets the amount of time cache files last for JSON caching.';
 
 $_lang['setting_cache_handler'] = 'Caching Handler Class';
-$_lang['setting_cache_handler_desc'] = 'The class name of the type handler to use for caching. If set to true, this will use server headers to cache the lexicon strings loaded into JavaScript for the manager interface.';
+$_lang['setting_cache_handler_desc'] = 'The class name of the type handler to use for caching.';
 
 $_lang['setting_cache_lang_js'] = 'Cache Lexicon JS Strings';
 $_lang['setting_cache_lang_js_desc'] = 'If set to true, this will use server headers to cache the lexicon strings loaded into JavaScript for the manager interface.';
@@ -153,6 +156,9 @@ $_lang['setting_container_suffix_desc'] = 'The suffix to append to Resources set
 
 $_lang['setting_cultureKey'] = 'Language';
 $_lang['setting_cultureKey_desc'] = 'Select the language for all non-manager Contexts, including web.';
+
+$_lang['setting_custom_resource_classes'] = 'Custom Resource Classes';
+$_lang['setting_custom_resource_classes_desc'] = 'A comma-separated list of custom Resource classes. Specify with lowercase_lexicon_key:className (Ex: wiki_resource:WikiResource). All custom Resource classes must extend modResource. To specify the controller location for each class, add a setting with [nameOfClassLowercase]_delegate_path with the directory path of the create/update php files. Ex: wikiresource_delegate_path for a class WikiResource that extends modResource.';
 
 $_lang['setting_default_template'] = 'Default Template';
 $_lang['setting_default_template_desc'] = 'Select the default Template you wish to use for new Resources. You can still select a different template in the Resource editor, this setting just pre-selects one of your Templates for you.';
@@ -262,6 +268,9 @@ $_lang['setting_manager_login_start_desc'] = 'Enter the ID of the document you w
 $_lang['setting_manager_theme'] = 'Manager Theme';
 $_lang['setting_manager_theme_desc'] = 'Select the Theme for the Content Manager.';
 
+$_lang['setting_manager_time_format'] = 'Manager Time Format';
+$_lang['setting_manager_time_format_desc'] = 'The format string, in PHP date() format, for the time settings represented in the manager.';
+
 $_lang['setting_manager_use_tabs'] = 'Use Tabs in Manager Layout';
 $_lang['setting_manager_use_tabs_desc'] = 'If true, the manager will use tabs for rendering the content panes. Otherwise, it will use portals.';
 
@@ -297,6 +306,18 @@ $_lang['setting_proxy_username_desc'] = 'The username to authenticate against wi
 
 $_lang['setting_password_min_length'] = 'Minimum Password Length';
 $_lang['setting_password_min_length_desc'] = 'The minimum length for a password for a User.';
+
+$_lang['setting_phpthumb_cache_maxage'] = 'phpThumb Max Cache Age';
+$_lang['setting_phpthumb_cache_maxage_desc'] = 'Delete cached thumbnails that have not been accessed in more than X days.';
+
+$_lang['setting_phpthumb_cache_maxsize'] = 'phpThumb Max Cache Size';
+$_lang['setting_phpthumb_cache_maxsize_desc'] = 'Delete least-recently-accessed thumbnails when cache grows bigger than X megabytes in size.';
+
+$_lang['setting_phpthumb_cache_maxfiles'] = 'phpThumb Max Cache Files';
+$_lang['setting_phpthumb_cache_maxfiles_desc'] = 'Delete least-recently-accessed thumbnails when cache has more than X files.';
+
+$_lang['setting_phpthumb_cache_source_enabled'] = 'phpThumb Cache Source Files';
+$_lang['setting_phpthumb_cache_source_enabled_desc'] = 'Whether or not to cache source files as they are loaded. Recommended to off.';
 
 $_lang['setting_publish_default'] = 'Published default';
 $_lang['setting_publish_default_desc'] = 'Select \'Yes\' to make all new resources published by default.';
@@ -425,6 +446,9 @@ $_lang['setting_use_editor'] = 'Enable Rich Text Editor';
 $_lang['setting_use_editor_desc'] = 'Do you want to enable the rich text editor? If you\'re more comfortable writing HTML, then you can turn the editor off using this setting. Note that this setting applies to all documents and all users!';
 $_lang['setting_use_editor_err'] = 'Please state whether or not you want to use an RTE editor.';
 
+$_lang['setting_use_multibyte'] = 'Use Multibyte Extension';
+$_lang['setting_use_multibyte_desc'] = 'Set to true if you want to use the mbstring extension for multibyte characters in your MODx installation. Only set to true if you have the mbstring PHP extension installed.';
+
 $_lang['setting_webpwdreminder_message'] = 'Web Reminder Email';
 $_lang['setting_webpwdreminder_message_desc'] = 'Enter a message to be sent to your web users whenever they request a new password via email. The Content Manager will send an e-mail containing their new password and activation information. <br /><strong>Note:</strong> The following placeholders are replaced by the Content Manager when the message is sent: <br /><br />[[+sname]] - Name of your web site, <br />[[+saddr]] - Your web site email address, <br />[[+surl]] - Your site url, <br />[[+uid]] - User\'s Login name or id, <br />[[+pwd]] - User\'s password, <br />[[+ufn]] - User\'s full name. <br /><br /><strong>Leave the [[+uid]] and [[+pwd]] in the e-mail, or else the username and password won\'t be sent in the mail and your users won\'t know their username or password!</strong>';
 $_lang['setting_webpwdreminder_message_default'] = 'Hello [[+uid]]\n\nTo active you new password click the following link:\n\n[[+surl]]\n\nIf successful you can use the following password to login:\n\nPassword:[[+pwd]]\n\nIf you did not request this email then please ignore it.\n\nRegrads,\nSite Administrator';
@@ -437,6 +461,8 @@ $_lang['setting_welcome_screen'] = 'Show Welcome Screen';
 $_lang['setting_welcome_screen_desc'] = 'If set to true, the welcome screen will show on the next successful loading of the welcome page, and then not show after that.';
 
 $_lang['setting_which_editor'] = 'Editor to use';
-$_lang['setting_which_editor_desc'] = 'Here you can select which rich text editor you wish to use. You can download and install additional Rich Text editors from the MODx download page.';
+$_lang['setting_which_editor_desc'] = 'Here you can select which Rich Text Editor you wish to use. You can download and install additional Rich Text Editors from Package Management.';
 
+$_lang['setting_which_element_editor'] = 'Editor to use for Elements';
+$_lang['setting_which_element_editor_desc'] = 'Here you can select which Rich Text Editor you wish to use when editing Elements. You can download and install additional Rich Text Editors from Package Management.';
 

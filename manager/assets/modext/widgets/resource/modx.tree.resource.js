@@ -73,7 +73,7 @@ Ext.extend(MODx.tree.Resource,MODx.tree.Tree,{
             }
             
             this.addContextMenuItem(m);
-            this.cm.show(n.getUI().getEl(),'t?');
+            this.cm.showAt(e.xy);
         }
         e.stopEvent();
     }
@@ -476,23 +476,23 @@ Ext.extend(MODx.tree.Resource,MODx.tree.Tree,{
 
         if (ui.hasClass('psave')) {
             m.push('-');
-            if (ui.hasClass('unpublished')) {
+            if (ui.hasClass('ppublish') && ui.hasClass('unpublished')) {
                 m.push({
                     text: _('resource_publish')
                     ,handler: this.publishDocument
                 });
-            } else {
+            } else if (ui.hasClass('punpublish')) {
                 m.push({
                     text: _('resource_unpublish')
                     ,handler: this.unpublishDocument
                 });
             }
-            if (ui.hasClass('deleted')) {
+            if (ui.hasClass('pdelete') && ui.hasClass('deleted')) {
                 m.push({
                     text: _('resource_undelete')
                     ,handler: this.undeleteDocument
                 });
-            } else {
+            } else if (ui.hasClass('pundelete')) {
                 m.push({
                     text: _('resource_delete')
                     ,handler: this.deleteDocument
@@ -516,6 +516,14 @@ Ext.extend(MODx.tree.Resource,MODx.tree.Tree,{
             ,'symlink': 'modSymLink'
             ,'static_resource': 'modStaticResource'
         };
+        if (MODx.config.custom_resource_classes) {
+            var crcs = MODx.config.custom_resource_classes;
+            if (!Ext.isEmpty(crcs)) {
+                for (var k in crcs) {
+                    types[k] = crcs[k];
+                }
+            }
+        }
         var o = this.fireEvent('loadCreateMenus',types);
         if (Ext.isObject(o)) {
             Ext.apply(types,o);

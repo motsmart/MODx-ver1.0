@@ -7,7 +7,10 @@ MODx.panel.Resource = function(config) {
         ,bodyStyle: 'padding: 15px;'
         ,autoHeight: true
         ,collapsible: false
-        ,items: {
+        ,items: [{
+            id: 'modx-content-above'
+            ,border: false
+        },{
             xtype: 'textarea'
             ,name: 'ta'
             ,id: 'ta'
@@ -15,16 +18,20 @@ MODx.panel.Resource = function(config) {
             ,anchor: '97%'
             ,height: 400
             ,grow: false
-        }
+        },{
+            id: 'modx-content-below'
+            ,border: false
+        }]
     };
     delete rte;
     var it = [];
     it.push({
         title: _('createedit_document')
         ,id: 'modx-resource-settings'
+        ,cls: 'modx-resource-tab'
         ,layout: 'form'
         ,labelWidth: 200
-        ,bodyStyle: 'padding: 15px;'
+        ,bodyStyle: 'padding: 15px 15px 15px 0;'
         ,autoHeight: true
         ,defaults: {
             border: false
@@ -221,25 +228,27 @@ MODx.panel.Resource = function(config) {
         ,checked: true
         
     },{
-        xtype: 'datetimefield'
+        xtype: 'xdatetime'
         ,fieldLabel: _('resource_publishedon')
         ,description: _('resource_publishedon_help')
         ,name: 'publishedon'
         ,id: 'modx-resource-publishedon'
         ,allowBlank: true
         ,dateFormat: MODx.config.manager_date_format
+        ,timeFormat: MODx.config.manager_time_format
         ,dateWidth: 120
         ,timeWidth: 120
     });
     if (MODx.config.publish_document) {
         va.push({
-            xtype: 'datetimefield'
+            xtype: 'xdatetime'
             ,fieldLabel: _('resource_publishdate')
             ,description: _('resource_publishdate_help')
             ,name: 'pub_date'
             ,id: 'modx-resource-pub-date'
             ,allowBlank: true
             ,dateFormat: MODx.config.manager_date_format
+            ,timeFormat: MODx.config.manager_time_format
             ,dateWidth: 120
             ,timeWidth: 120
             
@@ -247,13 +256,14 @@ MODx.panel.Resource = function(config) {
     }
     if (MODx.config.publish_document) {
         va.push({
-            xtype: 'datetimefield'
+            xtype: 'xdatetime'
             ,fieldLabel: _('resource_unpublishdate')
             ,description: _('resource_unpublishdate_help')
             ,name: 'unpub_date'
             ,id: 'modx-resource-unpub-date'
             ,allowBlank: true
             ,dateFormat: MODx.config.manager_date_format
+            ,timeFormat: MODx.config.manager_time_format
             ,dateWidth: 120
             ,timeWidth: 120            
         });
@@ -316,11 +326,12 @@ MODx.panel.Resource = function(config) {
     it.push({
         id: 'modx-page-settings'
         ,title: _('page_settings')
+        ,cls: 'modx-resource-tab'
         ,layout: 'form'
         ,forceLayout: true
         ,deferredRender: false
         ,labelWidth: 200
-        ,bodyStyle: 'padding: 15px;'
+        ,bodyStyle: 'padding: 15px 15px 15px 0;'
         ,autoHeight: true
         ,defaults: {
             border: false

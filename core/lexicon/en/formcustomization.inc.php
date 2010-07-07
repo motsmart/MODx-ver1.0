@@ -8,6 +8,7 @@
  */
 $_lang['action'] = 'Action';
 $_lang['action_desc'] = 'The Action that this Rule will apply to.';
+$_lang['activate'] = 'Activate';
 $_lang['constraint'] = 'Constraint';
 $_lang['constraint_class'] = 'Constraint Class';
 $_lang['constraint_class_desc'] = 'Optional. If set, along with the Constraint Field and Constraint options, will restrict this rule to the constraints applied.';
@@ -16,6 +17,7 @@ $_lang['constraint_field'] = 'Constraint Field';
 $_lang['constraint_field_desc'] = 'Optional. The field by which this constraint should be applied.';
 $_lang['containing_panel'] = 'Containing Panel';
 $_lang['containing_panel_desc'] = 'The ID of the containing Form Panel the field is in. This is sometimes necessary for certain rules, so that the system can know what form or panel the field is in.';
+$_lang['deactivate'] = 'Deactivate';
 $_lang['field'] = 'Field';
 $_lang['field_desc'] = 'This is the field to affect. This may also be a tab, or TV. If it is a TV, please specify in this format: "tv#", where # is the ID of the TV.';
 $_lang['field_default'] = 'Field Default Value';
@@ -41,9 +43,11 @@ $_lang['rule_update'] = 'Update Rule';
 $_lang['rule_value_desc'] = 'The value to set in the Rule.';
 $_lang['rules'] = 'Rules';
 $_lang['tab_title'] = 'Tab Title';
+$_lang['tab_new'] = 'New Tab';
 $_lang['tab_visible'] = 'Tab Visible';
 $_lang['tv_default'] = 'TV Default Value';
 $_lang['tv_label'] = 'TV Label';
+$_lang['tv_move'] = 'Move TV to Tab';
 $_lang['tv_visible'] = 'TV Visible';
 $_lang['usergroup'] = 'User Group';
 $_lang['usergroup_desc'] = 'Optional. If set, will restrict this rule to only Users in the specified User Group.';

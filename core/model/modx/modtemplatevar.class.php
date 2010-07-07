@@ -259,7 +259,7 @@ class modTemplateVar extends modElement {
         $format= $this->get('display');
         $tvtype= $this->get('type');
 
-        $outputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/'.$this->xpdo->context->get('key').'/output/';
+        $outputRenderPath = $this->getRenderDirectory('OnTVOutputRenderList','output');
         if (!file_exists($outputRenderPath) || !is_dir($outputRenderPath)) {
             $outputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/web/output/';
         }
@@ -267,7 +267,9 @@ class modTemplateVar extends modElement {
         $outputRenderFile = $outputRenderPath.$this->get('display').'.php';
 
         if (!file_exists($outputRenderFile)) {
-            $o = include $outputRenderPath.'default.php';
+            if (file_exists($outputRenderPath.'default.php')) {
+                $o = include $outputRenderPath.'default.php';
+            }
         } else {
             $o = include $outputRenderFile;
         }
@@ -313,7 +315,8 @@ class modTemplateVar extends modElement {
                    OR `modActionDom`.`rule` = "tvVisible"
                    OR `modActionDom`.`rule` = "tvTitle")'
                 ),
-                'name' => 'tv'.$this->get('id'),
+                '"tv'.$this->get('id').'" IN (name)',
+                'modActionDom.active' => true,
             ));
             $c->andCondition(array(
                 '((`Access`.`principal_class` = "modUserGroup"
@@ -344,6 +347,8 @@ class modTemplateVar extends modElement {
             unset($domRules,$rule,$userGroups,$v,$c);
         }
 
+        $this->set('description',$this->xpdo->stripTags($this->get('description')));
+
         $this->xpdo->smarty->assign('tv',$this);
 
 
@@ -360,19 +365,60 @@ class modTemplateVar extends modElement {
         }
 
         /* find the correct renderer for the TV, if not one, render a textbox */
-        $inputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/'.$this->xpdo->context->get('key').'/input/';
+        $inputRenderPath = $this->getRenderDirectory('OnTVInputRenderList','input');
         if (!file_exists($inputRenderPath) || !is_dir($inputRenderPath)) {
-            $outputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/web/input/';
+            $inputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/web/input/';
         }
 
         $inputRenderFile = $inputRenderPath.$this->get('type').'.php';
         if (!file_exists($inputRenderFile)) {
-            $field_html .= include $inputRenderPath.'textbox.php';
+            if (file_exists($inputRenderPath.'textbox.php')) {
+                $field_html .= include $inputRenderPath.'textbox.php';
+            }
         } else {
             $field_html .= include $inputRenderFile;
         }
 
         return $field_html;
+    }
+
+
+    /**
+     * Finds the correct directory for renders
+     *
+     * @param string $event The plugin event to fire
+     * @param string $subdir The subdir to search
+     * @return string The found render directory
+     */
+    public function getRenderDirectory($event,$subdir) {
+        $renderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/'.$this->xpdo->context->get('key').'/'.$subdir.'/';
+        $renderDirectories = array(
+            $renderPath,
+        );
+        $pluginResult = $this->xpdo->invokeEvent($event,array(
+            'context' => $this->xpdo->context->get('key'),
+        ));
+        if (!is_array($pluginResult) && !empty($pluginResult)) { $pluginResult = array($pluginResult); }
+        if (!empty($pluginResult)) {
+            foreach ($pluginResult as $result) {
+                if (empty($result)) continue;
+                $renderDirectories[] = $result;
+            }
+        }
+
+        /* search directories */
+        $types = array();
+        foreach ($renderDirectories as $renderDirectory) {
+            if (empty($renderDirectory)) continue;
+            try {
+                $dirIterator = new DirectoryIterator($renderDirectory);
+                foreach ($dirIterator as $file) {
+                    if (!$file->isReadable() || !$file->isFile()) continue;
+                    $renderPath = dirname($file->getPathname()).'/';
+                }
+            } catch (UnexpectedValueException $e) {}
+        }
+        return $renderPath;
     }
 
     /**
@@ -386,6 +432,27 @@ class modTemplateVar extends modElement {
         $s= str_replace("%3D", '=', $s);
         $s= str_replace("%26", '&', $s);
         return $s;
+    }
+
+    /**
+     * Returns an array of display params for this TV
+     * 
+     * @return array The processed settings
+     */
+    public function getDisplayParams() {
+        $settings = array();
+        $params = $tv->get('display_params');
+        $ps = explode('&',$params);
+        foreach ($ps as $p) {
+            $param = explode('=',$p);
+            if ($p[0] != '') {
+                $v = $param[1];
+                if ($v == 'true') $v = 1;
+                if ($v == 'false') $v = 0;
+                $settings[$param[0]] = $v;
+            }
+        }
+        return $settings;
     }
 
     /**

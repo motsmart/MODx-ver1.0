@@ -12,10 +12,16 @@ Ext.apply(Ext, {
 
 MODx.Layout = function(config){
     config = config || {};
-    Ext.state.Manager.setProvider(new Ext.state.CookieProvider({
-        expires: new Date(new Date().getTime()+(1000*60*60*24))
-    }));
     Ext.BLANK_IMAGE_URL = MODx.config.manager_url+'assets/ext3/resources/images/default/s.gif';
+    Ext.Ajax.defaultHeaders = {
+        'Powered-By': 'MODx'
+        ,'modAuth': config.auth
+    };
+    Ext.Ajax.extraParams = {
+        'Powered-By': 'MODx'
+        ,'HTTP_MODAUTH': config.auth
+    };
+    MODx.siteId = config.auth;
 
     var tabs = [];
     if (MODx.perm.resource_tree) {
@@ -50,13 +56,15 @@ MODx.Layout = function(config){
             ,id: 'modx-leftbar-tabs'
             ,split: true
             ,width: 310
-            ,minSize: 310
+            ,minSize: 150
             ,maxSize: 800
             ,autoHeight: true
             ,unstyled: true
-            /*,collapseMode: 'mini'*/
+            ,collapseMode: 'mini'
+            ,useSplitTips: true
             ,monitorResize: true
             ,forceLayout: true
+            ,stateful: false
             ,items: [{
                  xtype: 'modx-tabs'
                 ,plain: true

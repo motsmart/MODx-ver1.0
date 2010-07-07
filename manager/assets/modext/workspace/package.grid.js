@@ -37,7 +37,7 @@ MODx.grid.Package = function(config) {
     if (MODx.config.auto_check_pkg_updates == 1) {
         cols.push({ header: _('updateable') ,dataIndex: 'updateable' ,renderer: this.rendYesNo });
     }
-    cols.push({ header: _('provider') ,dataIndex: 'provider_name' });
+    cols.push({ header: _('provider') ,dataIndex: 'provider_name'});
     cols.push(this.action);
     
     Ext.applyIf(config,{
@@ -97,7 +97,13 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
                         });
                     }
                     this.windows[x].on('ready',function() {
+
                         var pd = Ext.getCmp('modx-window-package-downloader');
+                        pd.fireEvent('proceed','modx-pd-selpackage');
+                        
+                        Ext.getCmp('modx-package-browser-thumb-view').hide();
+                        Ext.getCmp('modx-package-browser-grid-panel').hide();
+                        Ext.getCmp('modx-package-browser-view').show();
                         
                         var t = Ext.getCmp('modx-package-browser-tree');
                         if (t) {
@@ -116,9 +122,18 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
                         if (v) {
                             v.baseParams.provider = p.id;
                         }
+                        pd.syncSize();
+                        pd.doLayout();
+                        if (Ext.isIE) {
+                            pd.setHeight('400px');
+                        } else {
+                            var tb = pd.getBottomToolbar();
+                            if (tb) {
+                                tb.getComponent('btn-next').setText(_('finish'));
+                                tb.getComponent('btn-back').setDisabled(true);
+                            }
+                        }
 
-                        pd.fireEvent('proceed','modx-pd-selpackage');
-                        pd.setPosition(null,0);
                     },this,{single:true});
                     
                     this.windows[x].show(e.target);
@@ -135,7 +150,7 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
         MODx.Ajax.request({
             url: this.config.url
             ,params: {
-                action: 'update'
+                action: 'update-remote'
                 ,signature: this.menu.record.signature
             }
             ,listeners: {
@@ -277,6 +292,41 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
                 },scope:this}
             }
         });
+    }
+
+    ,getMenu: function(g,ri,e) {
+        var m = [];
+        var n = this.getSelectionModel().getSelected();
+        var installed = n.data.installed && n.data.installed != '' && n.data.installed != '0000-00-00 00:00:00';
+        
+        m.push({
+            text: _('package_view')
+            ,handler: this.viewPackage
+        },'-')
+        if (n.data.provider != 0) {
+            m.push({
+                text: _('package_check_for_updates')
+                ,handler: this.update
+            });
+        }
+        m.push({
+            text: installed ? _('package_reinstall') : _('package_install')
+            ,handler: this.install
+        });
+        if (installed) {
+            m.push({
+                text: _('package_uninstall')
+                ,handler: this.uninstall
+            });
+        }
+        m.push('-',{
+            text: _('package_remove')
+            ,handler: this.remove
+        });
+
+        if (m.length > 0) {
+            this.addContextMenuItem(m);
+        }
     }
 });
 Ext.reg('modx-grid-package',MODx.grid.Package);

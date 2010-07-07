@@ -42,6 +42,15 @@ $settings['auto_check_pkg_updates']->fromArray(array (
   'area' => 'system',
   'editedon' => null,
 ), '', true, true);
+$settings['auto_check_pkg_updates_cache_expire']= $xpdo->newObject('modSystemSetting');
+$settings['auto_check_pkg_updates_cache_expire']->fromArray(array (
+  'key' => 'auto_check_pkg_updates_cache_expire',
+  'value' => 15,
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'system',
+  'editedon' => null,
+), '', true, true);
 $settings['automatic_alias']= $xpdo->newObject('modSystemSetting');
 $settings['automatic_alias']->fromArray(array (
   'key' => 'automatic_alias',
@@ -256,6 +265,15 @@ $settings['cultureKey']->fromArray(array (
   'xtype' => 'modx-combo-language',
   'namespace' => 'core',
   'area' => 'language',
+  'editedon' => null,
+), '', true, true);
+$settings['custom_resource_classes']= $xpdo->newObject('modSystemSetting');
+$settings['custom_resource_classes']->fromArray(array (
+  'key' => 'custom_resource_classes',
+  'value' => '',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'system',
   'editedon' => null,
 ), '', true, true);
 $settings['default_template']= $xpdo->newObject('modSystemSetting');
@@ -539,6 +557,15 @@ $settings['manager_date_format']->fromArray(array (
   'area' => 'manager',
   'editedon' => null,
 ), '', true, true);
+$settings['manager_time_format']= $xpdo->newObject('modSystemSetting');
+$settings['manager_time_format']->fromArray(array (
+  'key' => 'manager_time_format',
+  'value' => 'g:i a',
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'manager',
+  'editedon' => null,
+), '', true, true);
 $settings['manager_direction']= $xpdo->newObject('modSystemSetting');
 $settings['manager_direction']->fromArray(array (
   'key' => 'manager_direction',
@@ -656,6 +683,44 @@ $settings['password_min_length']->fromArray(array (
   'area' => 'authentication',
   'editedon' => null,
 ), '', true, true);
+
+$settings['phpthumb_cache_maxage']= $xpdo->newObject('modSystemSetting');
+$settings['phpthumb_cache_maxage']->fromArray(array (
+  'key' => 'phpthumb_cache_maxage',
+  'value' => 30, // 30 days
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'phpthumb',
+  'editedon' => null,
+), '', true, true);
+$settings['phpthumb_cache_maxsize']= $xpdo->newObject('modSystemSetting');
+$settings['phpthumb_cache_maxsize']->fromArray(array (
+  'key' => 'phpthumb_cache_maxsize',
+  'value' => 100 * 1024 * 1024, // 100MB
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'phpthumb',
+  'editedon' => null,
+), '', true, true);
+$settings['phpthumb_cache_maxfiles']= $xpdo->newObject('modSystemSetting');
+$settings['phpthumb_cache_maxfiles']->fromArray(array (
+  'key' => 'phpthumb_cache_maxfiles',
+  'value' => 10000, // 10k files
+  'xtype' => 'textfield',
+  'namespace' => 'core',
+  'area' => 'phpthumb',
+  'editedon' => null,
+), '', true, true);
+$settings['phpthumb_cache_source_enabled']= $xpdo->newObject('modSystemSetting');
+$settings['phpthumb_cache_source_enabled']->fromArray(array (
+  'key' => 'phpthumb_cache_source_enabled',
+  'value' => false,
+  'xtype' => 'combo-boolean',
+  'namespace' => 'core',
+  'area' => 'phpthumb',
+  'editedon' => null,
+), '', true, true);
+
 $settings['publish_default']= $xpdo->newObject('modSystemSetting');
 $settings['publish_default']->fromArray(array (
   'key' => 'publish_default',
@@ -963,6 +1028,15 @@ $settings['use_editor']->fromArray(array (
   'area' => 'editor',
   'editedon' => null,
 ), '', true, true);
+$settings['use_multibyte']= $xpdo->newObject('modSystemSetting');
+$settings['use_multibyte']->fromArray(array (
+  'key' => 'use_multibyte',
+  'value' => false,
+  'xtype' => 'combo-boolean',
+  'namespace' => 'core',
+  'area' => 'language',
+  'editedon' => null,
+), '', true, true);
 $settings['webpwdreminder_message']= $xpdo->newObject('modSystemSetting');
 $settings['webpwdreminder_message']->fromArray(array (
   'key' => 'webpwdreminder_message',
@@ -1025,6 +1099,15 @@ $settings['welcome_screen_url']->fromArray(array (
 $settings['which_editor']= $xpdo->newObject('modSystemSetting');
 $settings['which_editor']->fromArray(array (
   'key' => 'which_editor',
+  'value' => '',
+  'xtype' => 'modx-combo-rte',
+  'namespace' => 'core',
+  'area' => 'editor',
+  'editedon' => null,
+), '', true, true);
+$settings['which_element_editor']= $xpdo->newObject('modSystemSetting');
+$settings['which_element_editor']->fromArray(array (
+  'key' => 'which_element_editor',
   'value' => '',
   'xtype' => 'modx-combo-rte',
   'namespace' => 'core',

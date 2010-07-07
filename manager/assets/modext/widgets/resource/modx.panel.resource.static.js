@@ -193,24 +193,26 @@ MODx.panel.Static = function(config) {
         ,inputValue: 1        
     });
     va.push({
-        xtype: 'datetimefield'
+        xtype: 'xdatetime'
         ,fieldLabel: _('resource_publishedon')
         ,description: _('resource_publishedon_help')
         ,name: 'publishedon'
         ,id: 'modx-resource-publishedon'
         ,allowBlank: true
         ,dateFormat: MODx.config.manager_date_format
+        ,timeFormat: MODx.config.manager_time_format
         ,dateWidth: 120
         ,timeWidth: 120
     });
     if (MODx.config.publish_document) {
         va.push({
-            xtype: 'datetimefield'
+            xtype: 'xdatetime'
             ,fieldLabel: _('resource_publishdate')
             ,description: _('resource_publishdate_help')
             ,name: 'pub_date'
             ,id: 'modx-resource-pub-date'
             ,dateFormat: MODx.config.manager_date_format
+            ,timeFormat: MODx.config.manager_time_format
             ,allowBlank: true
             ,dateWidth: 120
             ,timeWidth: 120
@@ -218,12 +220,13 @@ MODx.panel.Static = function(config) {
     }
     if (MODx.config.publish_document) {
         va.push({
-            xtype: 'datetimefield'
+            xtype: 'xdatetime'
             ,fieldLabel: _('resource_unpublishdate')
             ,description: _('resource_unpublishdate_help')
             ,name: 'unpub_date'
             ,id: 'modx-resource-unpub-date'
             ,dateFormat: MODx.config.manager_date_format
+            ,timeFormat: MODx.config.manager_time_format
             ,allowBlank: true
             ,dateWidth: 120
             ,timeWidth: 120   
@@ -380,6 +383,14 @@ Ext.extend(MODx.panel.Static,MODx.FormPanel,{
                     Ext.getCmp('modx-resource-header').getEl().update('<h2>'+_('static_resource')+': '+r.object.pagetitle+'</h2>');
                     
                     this.getForm().setValues(r.object);
+
+                    if (MODx.config.use_editor == 1 && !this.rteLoaded) {
+                        if (MODx.loadRTE && !this.rteLoaded) {
+                            MODx.loadRTE();
+                        }
+                        this.rteLoaded = true;
+                    }
+
                     this.fireEvent('ready');
                 } else { MODx.form.Handler.errorJSON(r); }
             }

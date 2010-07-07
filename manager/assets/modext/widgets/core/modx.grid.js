@@ -193,9 +193,12 @@ Ext.extend(MODx.grid.Grid,Ext.grid.EditorGridPanel,{
             this.getSelectionModel().selectRow(ri);
         }
         this.menu.removeAll();
+        if (this.getMenu) { this.getMenu(g,ri,e); }
         if (this.menu.record.menu) {
             this.addContextMenuItem(this.menu.record.menu);
-            this.menu.show(e.target);
+        }
+        if (this.menu.items.length > 0) {
+            this.menu.showAt(e.xy);
         }
     }
     
@@ -321,7 +324,7 @@ Ext.extend(MODx.grid.Grid,Ext.grid.EditorGridPanel,{
         }
     }
 
-,getSelectedAsList: function() {
+    ,getSelectedAsList: function() {
         var sels = this.getSelectionModel().getSelections();
         if (sels.length <= 0) return false;
 
@@ -329,7 +332,10 @@ Ext.extend(MODx.grid.Grid,Ext.grid.EditorGridPanel,{
         for (var i=0;i<sels.length;i++) {
             cs += ','+sels[i].data.id;
         }
-        cs = Ext.util.Format.substr(cs,1);
+
+        if (cs[0] == ',') {
+            cs = cs.substr(1);
+        }
         return cs;
     }
     

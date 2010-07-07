@@ -44,15 +44,15 @@ $c->where(array(
       LIMIT 1) = `modTransportPackage`.`signature`',
 ));
 $count = $modx->getCount('modTransportPackage',$c);
-$c->select('
-    `modTransportPackage`.*,
-    `Provider`.`name` AS `provider_name`
-');
-$c->sortby('`modTransportPackage`.`signature`', 'ASC');
+$c->select(array(
+    'modTransportPackage.*',
+));
+$c->select('`Provider`.`name` AS `provider_name`');
+$c->sortby('modTransportPackage.signature', 'ASC');
 if ($isLimit) $c->limit($limit,$start);
 $packages = $modx->getCollection('transport.modTransportPackage',$c);
 
-
+$updatesCacheExpire = $modx->getOption('auto_check_pkg_updates_cache_expire',$scriptProperties,5) * 60;
 
 $modx->getVersionData();
 $productVersion = $modx->version['code_name'].'-'.$modx->version['full_version'];
@@ -91,34 +91,6 @@ foreach ($packages as $key => $package) {
     $not_installed = $package->get('installed') == null || $package->get('installed') == '0000-00-00 00:00:00';
     $packageArray['iconaction'] = $not_installed ? 'icon-install' : 'icon-uninstall';
     $packageArray['textaction'] = $not_installed ? $modx->lexicon('install') : $modx->lexicon('uninstall');
-    $packageArray['menu'] = array();
-
-    $packageArray['menu'][] = array(
-        'text' => $modx->lexicon('package_view'),
-        'handler' => 'this.viewPackage',
-    );
-    $packageArray['menu'][] = '-';
-    if ($package->get('provider') != 0) {
-        $packageArray['menu'][] = array(
-            'text' => $modx->lexicon('package_check_for_updates'),
-            'handler' => 'this.update',
-        );
-    }
-    $packageArray['menu'][] = array(
-        'text' => ($not_installed) ? $modx->lexicon('package_install') : $modx->lexicon('package_reinstall'),
-        'handler' => ($not_installed) ? 'this.install' : 'this.install',
-    );
-    if ($not_installed == false) {
-        $packageArray['menu'][] = array(
-            'text' => $modx->lexicon('package_uninstall'),
-            'handler' => 'this.uninstall',
-        );
-    }
-    $packageArray['menu'][] = '-';
-    $packageArray['menu'][] = array(
-        'text' => $modx->lexicon('package_remove'),
-        'handler' => 'this.remove',
-    );
 
     /* setup description, using either metadata or readme */
     $metadata = $package->get('metadata');
@@ -141,31 +113,38 @@ foreach ($packages as $key => $package) {
 
 
     /* check for updates */
-    $updates = array();
+    $updates = array('count' => 0);
     if ($package->get('provider') > 0 && $modx->getOption('auto_check_pkg_updates',null,false)) {
-        /* cache providers to speed up load time */
-        if (!empty($providerCache[$package->get('provider')])) {
-            $provider =& $providerCache[$package->get('provider')];
-        } else {
-            $provider = $package->getOne('Provider');
-            if ($provider) {
-                $providerCache[$provider->get('id')] = $provider;
-            }
-        }
-        if ($provider) {
-            $loaded = $provider->getClient();
-            if ($loaded) {
-                $response = $provider->request('package/update','GET',array(
-                    'signature' => $package->get('signature'),
-                    'supports' => $productVersion,
-                ));
-                if ($response && !$response->isError()) {
-                    $updates = $response->toXml();
+        $updateCacheKey = 'mgr/providers/updates/'.$package->get('provider').'/'.$package->get('signature');
+
+        $updates = $modx->cacheManager->get($updateCacheKey);
+        if (empty($updates)) {
+            /* cache providers to speed up load time */
+            if (!empty($providerCache[$package->get('provider')])) {
+                $provider =& $providerCache[$package->get('provider')];
+            } else {
+                $provider = $package->getOne('Provider');
+                if ($provider) {
+                    $providerCache[$provider->get('id')] = $provider;
                 }
+            }
+            if ($provider) {
+                $loaded = $provider->getClient();
+                if ($loaded) {
+                    $response = $provider->request('package/update','GET',array(
+                        'signature' => $package->get('signature'),
+                        'supports' => $productVersion,
+                    ));
+                    if ($response && !$response->isError()) {
+                        $updates = $response->toXml();
+                    }
+                }
+                $updates = array('count' => count($updates));
+                $modx->cacheManager->set($updateCacheKey,$updates,$updatesCacheExpire);
             }
         }
     }
-    $packageArray['updateable'] = count($updates) >= 1 ? true : false;
+    $packageArray['updateable'] = $updates['count'] >= 1 ? true : false;
 
     $list[] = $packageArray;
 }

@@ -40,6 +40,7 @@ class modInstall {
     public $config = array ();
     public $action = '';
     public $lexicon = array ();
+    public $finished = false;
 
     /**
      * The constructor for the modInstall object.
@@ -390,6 +391,10 @@ class modInstall {
                     '.tpl.php',
                 ),
             ));
+
+            $this->settings->store(array(
+                'finished' => true,
+            ));
         }
 
         return $results;
@@ -440,7 +445,7 @@ class modInstall {
         if (!is_dir($assetsPath)) {
             $cacheManager->writeTree($assetsPath,$directoryOptions);
         }
-        if (!is_dir($assetsPath) || !is_writable($assetsPath)) {
+        if (!is_dir($assetsPath) || !$this->is_writable2($assetsPath)) {
             $errors['assets_not_created'] = str_replace('[[+path]]',$assetsPath,$this->lexicon['setup_err_assets']);
         }
         unset($assetsPath);
@@ -450,7 +455,7 @@ class modInstall {
         if (!is_dir($assetsCompPath)) {
             $cacheManager->writeTree($assetsCompPath,$directoryOptions);
         }
-        if (!is_dir($assetsCompPath) || !is_writable($assetsCompPath)) {
+        if (!is_dir($assetsCompPath) || !$this->is_writable2($assetsCompPath)) {
             $errors['assets_comp_not_created'] = str_replace('[[+path]]',$assetsCompPath,$this->lexicon['setup_err_assets_comp']);
         }
         unset($assetsCompPath);
@@ -460,7 +465,7 @@ class modInstall {
         if (!is_dir($coreCompPath)) {
             $cacheManager->writeTree($coreCompPath,$directoryOptions);
         }
-        if (!is_dir($coreCompPath) || !is_writable($coreCompPath)) {
+        if (!is_dir($coreCompPath) || !$this->is_writable2($coreCompPath)) {
             $errors['core_comp_not_created'] = str_replace('[[+path]]',$coreCompPath,$this->lexicon['setup_err_core_comp']);
         }
         unset($coreCompPath);
@@ -506,6 +511,7 @@ class modInstall {
 
         $settings = $this->settings->fetch();
         $settings['last_install_time'] = time();
+        $settings['site_id'] = uniqid('modx',true);
         if (file_exists($configTpl)) {
             if ($tplHandle = @ fopen($configTpl, 'rb')) {
                 $content = @ fread($tplHandle, filesize($configTpl));
@@ -753,7 +759,7 @@ class modInstall {
         if (!file_exists(MODX_CORE_PATH) || !is_dir(MODX_CORE_PATH)) {
             $errors[] = $this->lexicon['preload_err_core_path'];
         }
-        if (!file_exists(MODX_CORE_PATH . 'cache/') || !is_dir(MODX_CORE_PATH . 'cache/') || !is_writable(MODX_CORE_PATH . 'cache/')) {
+        if (!file_exists(MODX_CORE_PATH . 'cache/') || !is_dir(MODX_CORE_PATH . 'cache/') || !$this->is_writable2(MODX_CORE_PATH . 'cache/')) {
             $errors[] = sprintf($this->lexicon['preload_err_cache'],MODX_CORE_PATH);
         }
 
@@ -779,5 +785,44 @@ class modInstall {
         }
         $output .= '</ul></body></html>';
         die($output);
+    }
+
+    /**
+     * Custom is_writable function to test on problematic servers
+     *
+     * @param string $path
+     * @return boolean True if write was successful
+     */
+    public function is_writable2($path) {
+        $written = false;
+        if (!is_string($path)) return false;
+
+        /* if is file get parent dir */
+        if (is_file($path)) { $path = dirname($path) . '/'; }
+
+        /* ensure / at end, translate \ to / for windows */
+        if (substr($path,strlen($path)-1) != '/') { $path .= '/'; }
+        $path = strtr($path,'\\','/');
+
+        /* get test file */
+        $filePath = $path.uniqid().'.cache.php';
+
+        /* attempt to create test file */
+        $fp = @fopen($filePath,'w');
+        if ($fp === false || !file_exists($filePath)) return false;
+
+        /* attempt to write to test file */
+        $written = @fwrite($fp,'<?php echo "test";');
+        if (!$written) { /* if fails try to delete it */
+            @fclose($fp);
+            @unlink($filePath);
+            return false;
+        }
+
+        /* attempt to delete test file */
+        @fclose($fp);
+        $written = @unlink($filePath);
+
+        return $written;
     }
 }

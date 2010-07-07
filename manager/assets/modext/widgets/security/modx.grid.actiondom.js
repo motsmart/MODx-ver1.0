@@ -8,40 +8,48 @@ MODx.grid.ActionDom = function(config) {
             ,'action','controller'
             ,'principal','principal_class'
             ,'name','description','xtype','container','rule','value'
-            ,'constraint','constraint_class','constraint_field','active','menu']
+            ,'constraint','constraint_class','constraint_field','active','perm']
         ,paging: true
         ,autosave: false
         ,sm: this.sm
+        ,remoteSort: true
         ,columns: [this.sm,{
             header: _('id')
             ,dataIndex: 'id'
             ,width: 40
+            ,sortable: true
         },{
             header: _('action')
             ,dataIndex: 'controller'
             ,width: 250
+            ,sortable: true
         },{
             header: _('name')
             ,dataIndex: 'name'
             ,width: 200
+            ,sortable: true
         },{
             header: _('description')
             ,dataIndex: 'description'
             ,width: 200
+            ,sortable: true
         },{
             header: _('rule')
             ,dataIndex: 'rule'
             ,width: 150
+            ,sortable: true
         },{
             header: _('value')
             ,dataIndex: 'value'
             ,width: 300
+            ,sortable: true
         },{
             header: _('usergroup')
             ,dataIndex: 'principal'
             ,width: 200
             ,editor: { xtype: 'modx-combo-usergroup' ,renderer: true }
             ,editable: false
+            ,sortable: true
         }]
         ,viewConfig: {
             forceFit:true
@@ -77,8 +85,44 @@ MODx.grid.ActionDom = function(config) {
     MODx.grid.ActionDom.superclass.constructor.call(this,config);
     this.on('render',function() { this.getStore().reload(); },this);
 };
-Ext.extend(MODx.grid.ActionDom,MODx.grid.Grid,{      
-    updateRule: function(btn,e) {
+Ext.extend(MODx.grid.ActionDom,MODx.grid.Grid,{
+    getMenu: function() {
+        var r = this.getSelectionModel().getSelected();
+        var p = r.data.perm;
+
+        var m = [];
+        if (p.indexOf('pedit') != -1) {
+            m.push({
+                text: _('edit')
+                ,handler: this.updateRule
+            },{
+                text: _('duplicate')
+                ,handler: this.duplicateRule
+            },'-');
+            if (r.data.active) {
+                m.push({
+                    text: _('deactivate')
+                    ,handler: this.deactivateRule
+                });
+            } else {
+                m.push({
+                    text: _('activate')
+                    ,handler: this.activateRule
+                });
+            }
+        }
+        if (p.indexOf('premove') != -1) {
+            m.push('-',{
+                text: _('remove')
+                ,handler: this.confirm.createDelegate(this,['remove','rule_remove_confirm'])
+            });
+        }
+        
+        if (m.length > 0) {
+            this.addContextMenuItem(m);
+        }
+    }
+    ,updateRule: function(btn,e) {
         var r = this.menu.record;
         r.action_id = r.action;
         this.loadWindow(btn,e,{
@@ -96,6 +140,19 @@ Ext.extend(MODx.grid.ActionDom,MODx.grid.Grid,{
             url: this.config.url
             ,params: {
                 action: 'duplicate'
+                ,id: this.menu.record.id
+            }
+            ,listeners: {
+                'success': {fn:this.refresh,scope:this}
+            }
+        });
+    }
+
+    ,activateRule: function(btn,e) {
+        MODx.Ajax.request({
+            url: this.config.url
+            ,params: {
+                action: 'activate'
                 ,id: this.menu.record.id
             }
             ,listeners: {
@@ -122,6 +179,18 @@ Ext.extend(MODx.grid.ActionDom,MODx.grid.Grid,{
             }
         });
         return true;
+    }
+    ,deactivateRule: function(btn,e) {
+        MODx.Ajax.request({
+            url: this.config.url
+            ,params: {
+                action: 'deactivate'
+                ,id: this.menu.record.id
+            }
+            ,listeners: {
+                'success': {fn:this.refresh,scope:this}
+            }
+        });
     }
     ,deactivateSelected: function() {
         var cs = this.getSelectedAsList();

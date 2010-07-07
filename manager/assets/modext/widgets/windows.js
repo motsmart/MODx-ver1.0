@@ -45,17 +45,14 @@ Ext.extend(MODx.window.DuplicateResource,MODx.Window,{
                 }
             });
         }
-        if (!this.config.is_folder) {
-            items.push({
+        items.push({
             xtype: 'textfield'
             ,id: 'modx-'+this.ident+'-name'
             ,fieldLabel: _('resource_name_new')
             ,name: 'name'
             ,width: 150
             ,value: ''
-            ,disabled: this.config.is_folder ? true : false
         });
-    }
 
         this.fp = this.createForm({
             url: this.config.url || MODx.config.connectors_url+'resource/index.php'
@@ -315,7 +312,7 @@ MODx.window.QuickUpdateChunk = function(config) {
             ,id: 'modx-'+this.ident+'-snippet'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,height: 380 
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -363,7 +360,7 @@ MODx.window.QuickCreateTemplate = function(config) {
             ,id: 'modx-'+this.ident+'-content'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,grow: true
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -423,7 +420,7 @@ MODx.window.QuickUpdateTemplate = function(config) {
             ,id: 'modx-'+this.ident+'-content'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,height: 380 
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -472,7 +469,7 @@ MODx.window.QuickCreateSnippet = function(config) {
             ,id: 'modx-'+this.ident+'-snippet'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,grow: true
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -532,7 +529,7 @@ MODx.window.QuickUpdateSnippet = function(config) {
             ,id: 'modx-'+this.ident+'-snippet'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,height: 380 
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -589,7 +586,7 @@ MODx.window.QuickCreatePlugin = function(config) {
             ,id: 'modx-'+this.ident+'-plugincode'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,grow: true
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -656,7 +653,7 @@ MODx.window.QuickUpdatePlugin = function(config) {
             ,id: 'modx-'+this.ident+'-plugincode'
             ,fieldLabel: _('code')
             ,anchor: '97%'
-            ,height: 380 
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -717,7 +714,7 @@ MODx.window.QuickCreateTV = function(config) {
             ,name: 'default_text'
             ,id: 'modx-'+this.ident+'-default-text'
             ,anchor: '97%'
-            ,grow: true
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER
@@ -789,7 +786,7 @@ MODx.window.QuickUpdateTV = function(config) {
             ,name: 'default_text'
             ,id: 'modx-'+this.ident+'-default-text'
             ,anchor: '97%'
-            ,grow: true
+            ,grow: true ,growMax: 380
         }]
        ,keys: [{
             key: Ext.EventObject.ENTER

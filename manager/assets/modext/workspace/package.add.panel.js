@@ -16,7 +16,9 @@ MODx.window.PackageDownloader = function(config) {
         ,maximizable: true
         ,autoHeight: true
         ,autoScroll: true
+        ,shadow: false
         ,anchor: '90%'
+        ,width: '90%'
         ,hideMode: 'offsets'
         ,firstPanel: 'modx-pd-start'
         ,lastPanel: 'modx-pd-selpackage'
@@ -266,10 +268,6 @@ MODx.panel.PDSelPackage = function(config) {
         }]
     });
     MODx.panel.PDSelPackage.superclass.constructor.call(this,config);
-    this.on('show',function() {
-        var pd = Ext.getCmp('modx-window-package-downloader');
-        pd.setPosition(null,0);
-    },this);
     
 };
 Ext.extend(MODx.panel.PDSelPackage,MODx.panel.WizardPanel,{
@@ -277,6 +275,13 @@ Ext.extend(MODx.panel.PDSelPackage,MODx.panel.WizardPanel,{
     
     ,submit: function(o) {
         Ext.getCmp('modx-window-package-downloader').hide();
+        return true;
+    }
+    ,fetch: function() {
+        var pd = Ext.getCmp('modx-window-package-downloader');
+        pd.setPosition(null,0);
+        pd.doLayout();
+        return false;
     }
 });
 Ext.reg('modx-panel-pd-selpackage',MODx.panel.PDSelPackage);
