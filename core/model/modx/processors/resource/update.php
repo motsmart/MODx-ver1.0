@@ -123,12 +123,13 @@ $scriptProperties['published'] = empty($scriptProperties['published']) ? 0 : 1;
 $scriptProperties['cacheable'] = empty($scriptProperties['cacheable']) ? 0 : 1;
 $scriptProperties['searchable'] = empty($scriptProperties['searchable']) ? 0 : 1;
 $scriptProperties['syncsite'] = empty($scriptProperties['syncsite']) ? 0 : 1;
+$scriptProperties['deleted'] = empty($scriptProperties['deleted']) ? 0 : 1;
 
 /* friendly url alias checks */
 if ($modx->getOption('friendly_alias_urls') && isset($scriptProperties['alias'])) {
     /* auto assign alias */
     if (empty($scriptProperties['alias']) && $modx->getOption('automatic_alias')) {
-        $scriptProperties['alias'] = $resource->cleanAlias(strtolower(trim($scriptProperties['pagetitle'])));
+        $scriptProperties['alias'] = $resource->cleanAlias($scriptProperties['pagetitle']);
     } else {
         $scriptProperties['alias'] = $resource->cleanAlias($scriptProperties['alias']);
     }
@@ -229,6 +230,7 @@ if ($resource->get('id') == $modx->getOption('site_start')
 
 /* Keep original publish state, if change is not permitted */
 if (!$modx->hasPermission('publish_document')) {
+    $scriptProperties['published'] = $resource->get('published');
     $scriptProperties['publishedon'] = $resource->get('publishedon');
     $scriptProperties['publishedby'] = $resource->get('publishedby');
     $scriptProperties['pub_date'] = $resource->get('pub_date');
@@ -237,10 +239,35 @@ if (!$modx->hasPermission('publish_document')) {
 
 /* invoke OnBeforeDocFormSave event */
 $modx->invokeEvent('OnBeforeDocFormSave',array(
-    'mode' => 'upd',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $resource->get('id'),
     'resource' => &$resource,
 ));
+
+/* set deleted status and fire events */
+if ($scriptProperties['deleted'] != $resource->get('deleted')) {
+    if ($resource->get('deleted')) { /* undelete */
+        if (!$modx->hasPermission('undelete_document')) {
+            $scriptProperties['deleted'] = $resource->get('deleted');
+        } else {
+            $resource->set('deleted',false);
+            $modx->invokeEvent('OnResourceUndelete',array(
+                'id' => $resource->get('id'),
+                'resource' => &$resource,
+            ));
+        }
+    } else { /* delete */
+        if (!$modx->hasPermission('delete_document')) {
+            $scriptProperties['deleted'] = $resource->get('deleted');
+        } else {
+            $resource->set('deleted',true);
+            $modx->invokeEvent('OnResourceDelete',array(
+                'id' => $resource->get('id'),
+                'resource' => &$resource,
+            ));
+        }
+    }
+}
 
 /* Now set and save data */
 unset($scriptProperties['variablesmodified']);
@@ -326,8 +353,8 @@ if (!empty($scriptProperties['tvs'])) {
         }
 
         /* if different than default and set, set TVR record */
-        if ($value != $tv->get('default_text')) {
-
+        $default = $tv->processBindings($tv->get('default_text'),$resource->get('id'));
+        if (strcmp($value,$default) != 0) {
             /* update the existing record */
             $tvc = $modx->getObject('modTemplateVarResource',array(
                 'tmplvarid' => $tv->get('id'),
@@ -385,7 +412,7 @@ if (isset($scriptProperties['resource_groups'])) {
 
 /* invoke OnDocFormSave event */
 $modx->invokeEvent('OnDocFormSave',array(
-    'mode' => 'upd',
+    'mode' => modSystemEvent::MODE_UPD,
     'id' => $resource->get('id'),
     'resource' => & $resource
 ));
@@ -409,7 +436,12 @@ if (!empty($scriptProperties['syncsite']) || !empty($scriptProperties['clearCach
 
 $resource->removeLock();
 
-$resourceArray = $resource->get(array('id','alias'));
-$resourceArray['preview_url'] = $modx->makeUrl($resource->get('id'));
-
-return $modx->error->success('',$resourceArray);
+$returnArray = $resource->get(array_diff(array_keys($resource->_fields), array('content','ta')));
+foreach ($returnArray as $k => $v) {
+    if (strpos($k,'tv') === 0) {
+        unset($returnArray[$k]);
+    }
+}
+$returnArray['class_key'] = $resource->get('class_key');
+$returnArray['preview_url'] = $modx->makeUrl($resource->get('id'));
+return $modx->error->success('',$returnArray);

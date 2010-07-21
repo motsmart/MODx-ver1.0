@@ -241,7 +241,7 @@ class modTemplateVar extends modElement {
         /* process any TV commands in value */
         $value= $this->processBindings($value, $resourceId);
 
-        $param= array ();
+        $params= array ();
         if ($paramstring= $this->get('display_params')) {
             $cp= explode("&", $paramstring);
             foreach ($cp as $p => $v) {
@@ -253,27 +253,9 @@ class modTemplateVar extends modElement {
             }
         }
 
-        $name= $this->get('name');
-
-        $id= "tv$name";
-        $format= $this->get('display');
-        $tvtype= $this->get('type');
-
-        $outputRenderPath = $this->getRenderDirectory('OnTVOutputRenderList','output');
-        if (!file_exists($outputRenderPath) || !is_dir($outputRenderPath)) {
-            $outputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/web/output/';
-        }
-
-        $outputRenderFile = $outputRenderPath.$this->get('display').'.php';
-
-        if (!file_exists($outputRenderFile)) {
-            if (file_exists($outputRenderPath.'default.php')) {
-                $o = include $outputRenderPath.'default.php';
-            }
-        } else {
-            $o = include $outputRenderFile;
-        }
-        return $o;
+        /* find the render */
+        $outputRenderPaths = $this->getRenderDirectories('OnTVOutputRenderList','output');
+        return $this->getRender($params,$value,$outputRenderPaths,'output',$resourceId,$this->get('display'));
     }
 
     /**
@@ -282,7 +264,7 @@ class modTemplateVar extends modElement {
      * @access public
      * @param integer $resourceId The id of the resource; 0 defaults to the
      * current resource.
-     * @param string $style Extra style parameters.
+     * @param string $style Extra style parameters. (deprecated)
      * @return mixed The rendered input for the template variable.
      */
     public function renderInput($resourceId= 0, $style= '') {
@@ -291,18 +273,11 @@ class modTemplateVar extends modElement {
                 'template_dir' => $this->xpdo->getOption('manager_path') . 'templates/' . $this->xpdo->getOption('manager_theme',null,'default') . '/',
             ));
         }
-        $field_html= '';
         $this->xpdo->smarty->assign('style',$style);
-        $value = $this->get('value');
+        $value = $this->getValue($resourceId);
 
         /* process any TV commands in value */
-        $value= $this->processBindings($value, $resourceId);
-
-        if (!$value || $value == '') {
-            $this->set('processedValue',$this->getValue($resourceId));
-        } else {
-            $this->set('processedValue',$value);
-        }
+        $value= $this->processBindings($value,$resourceId);
 
         /* if any FC tvDefault rules, set here */
         if ($this->xpdo->request && $this->xpdo->user instanceof modUser) {
@@ -315,7 +290,7 @@ class modTemplateVar extends modElement {
                    OR `modActionDom`.`rule` = "tvVisible"
                    OR `modActionDom`.`rule` = "tvTitle")'
                 ),
-                '"tv'.$this->get('id').'" IN (name)',
+                '"tv'.$this->get('id').'" IN (`name`)',
                 'modActionDom.active' => true,
             ));
             $c->andCondition(array(
@@ -334,6 +309,7 @@ class modTemplateVar extends modElement {
                     case 'tvDefault':
                         $v = $rule->get('value');
                         if (empty($resourceId)) {
+                            $value = $v;
                             $this->set('value',$v);
                         }
                         $this->set('default_text',$v);
@@ -346,13 +322,17 @@ class modTemplateVar extends modElement {
             }
             unset($domRules,$rule,$userGroups,$v,$c);
         }
+        /* properly set value back if any FC rules, resource values, or bindings have adjusted it */
+        $this->set('value',$value);
+        $this->set('processedValue',$value);
+        $this->set('default_text',$this->processBindings($this->get('default_text'),$resourceId));
 
-        $this->set('description',$this->xpdo->stripTags($this->get('description')));
+        /* strip tags from description */
+        $this->set('description',strip_tags($this->get('description')));
 
         $this->xpdo->smarty->assign('tv',$this);
 
-
-        $param= array ();
+        $params= array ();
         if ($paramstring= $this->get('display_params')) {
             $cp= explode("&", $paramstring);
             foreach ($cp as $p => $v) {
@@ -365,35 +345,62 @@ class modTemplateVar extends modElement {
         }
 
         /* find the correct renderer for the TV, if not one, render a textbox */
-        $inputRenderPath = $this->getRenderDirectory('OnTVInputRenderList','input');
-        if (!file_exists($inputRenderPath) || !is_dir($inputRenderPath)) {
-            $inputRenderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/web/input/';
-        }
-
-        $inputRenderFile = $inputRenderPath.$this->get('type').'.php';
-        if (!file_exists($inputRenderFile)) {
-            if (file_exists($inputRenderPath.'textbox.php')) {
-                $field_html .= include $inputRenderPath.'textbox.php';
-            }
-        } else {
-            $field_html .= include $inputRenderFile;
-        }
-
-        return $field_html;
+        $inputRenderPaths = $this->getRenderDirectories('OnTVInputRenderList','input');
+        return $this->getRender($params,$value,$inputRenderPaths,'input',$resourceId,$this->get('type'));
     }
 
+    /**
+     * Gets the correct render given paths and type of render
+     * 
+     * @param array $params The parameters to pass to the render
+     * @param mixed $value The value of the TV
+     * @param array $paths An array of paths to search
+     * @param string $method The type of Render (input/output/properties)
+     * @param integer $resourceId The ID of the current Resource
+     * @param string $type The type of render to display
+     * @return string
+     */
+    public function getRender($params,$value,array $paths,$method,$resourceId = 0,$type = 'text') {
+        /* backwards compat stuff */
+        $name= $this->get('name');
+        $id= "tv$name";
+        $format= $this->get('display');
+        $tvtype= $this->get('type');
+        /* end backwards compat */
+
+        $modx =& $this->xpdo;
+
+        $output = '';
+        foreach ($paths as $path) {
+            $renderFile = $path.$type.'.php';
+            if (file_exists($renderFile)) {
+                $output = include $renderFile;
+                break;
+            }
+        }
+        if (empty($output)) {
+            $p = $this->xpdo->getOption('processors_path').'element/tv/renders/'.$this->xpdo->context->get('key').'/'.$method.'/';
+            if (file_exists($p.'text.php')) {
+                $output = include $p.'text.php';
+            } else {
+                $output = include $this->xpdo->getOption('processors_path').'element/tv/renders/'.($method == 'input' ? 'mgr' : 'web').'/'.$method.'/text.php';
+            }
+        }
+        return $output;
+    }
 
     /**
-     * Finds the correct directory for renders
+     * Finds the correct directories for renders
      *
      * @param string $event The plugin event to fire
      * @param string $subdir The subdir to search
-     * @return string The found render directory
+     * @return array The found render directories
      */
-    public function getRenderDirectory($event,$subdir) {
+    public function getRenderDirectories($event,$subdir) {
         $renderPath = $this->xpdo->getOption('processors_path').'element/tv/renders/'.$this->xpdo->context->get('key').'/'.$subdir.'/';
         $renderDirectories = array(
             $renderPath,
+            $this->xpdo->getOption('processors_path').'element/tv/renders/'.($subdir == 'input' ? 'mgr' : 'web').'/'.$subdir.'/',
         );
         $pluginResult = $this->xpdo->invokeEvent($event,array(
             'context' => $this->xpdo->context->get('key'),
@@ -408,17 +415,19 @@ class modTemplateVar extends modElement {
 
         /* search directories */
         $types = array();
+        $renderPaths = array();
         foreach ($renderDirectories as $renderDirectory) {
             if (empty($renderDirectory)) continue;
             try {
                 $dirIterator = new DirectoryIterator($renderDirectory);
                 foreach ($dirIterator as $file) {
                     if (!$file->isReadable() || !$file->isFile()) continue;
-                    $renderPath = dirname($file->getPathname()).'/';
+                    $renderPaths[] = dirname($file->getPathname()).'/';
                 }
             } catch (UnexpectedValueException $e) {}
         }
-        return $renderPath;
+        $renderPaths = array_unique($renderPaths);
+        return $renderPaths;
     }
 
     /**
@@ -520,7 +529,7 @@ class modTemplateVar extends modElement {
      * @param integer $resourceId The resource in which the TV is assigned.
      * @return string The processed value.
      */
-    public function processBindings($value= '', $resourceId= 0) {
+    public function processBindings($value= '', $resourceId= 0, $processInherit = true) {
         $modx =& $this->xpdo;
         $nvalue= trim($value);
         if (substr($nvalue,0,1)!='@') return $value;
@@ -572,31 +581,35 @@ class modTemplateVar extends modElement {
                     break;
 
                 case 'INHERIT':
-                    $output = $param; /* Default to param value if no content from parents */
-                    $resource = null;
-                    if ($resourceId && (!($this->xpdo->resource instanceof modResource) || $this->xpdo->resource->get('id') != $resourceId)) {
-                        $resource = $this->xpdo->getObject('modResource',$resourceId);
-                    } else if ($this->xpdo->resource instanceof modResource) {
-                        $resource =& $this->xpdo->resource;
-                    }
-                    if (!$resource) break;
-                    $doc = array('id' => $resource->get('id'), 'parent' => $resource->get('parent'));
+                    if ($processInherit) {
+                        $output = $param; /* Default to param value if no content from parents */
+                        $resource = null;
+                        if ($resourceId && (!($this->xpdo->resource instanceof modResource) || $this->xpdo->resource->get('id') != $resourceId)) {
+                            $resource = $this->xpdo->getObject('modResource',$resourceId);
+                        } else if ($this->xpdo->resource instanceof modResource) {
+                            $resource =& $this->xpdo->resource;
+                        }
+                        if (!$resource) break;
+                        $doc = array('id' => $resource->get('id'), 'parent' => $resource->get('parent'));
 
-                    while($doc['parent'] != 0) {
-                        $parent_id = $doc['parent'];
-                        if(!$doc = $this->xpdo->getDocument($parent_id, 'id,parent')) {
-                            /* Get unpublished document */
-                            $doc = $this->xpdo->getDocument($parent_id, 'id,parent',0);
-                        }
-                        if ($doc) {
-                            $tv = $this->xpdo->getTemplateVar($this->get('name'), '*', $doc['id']);
-                            if(isset($tv['value']) && $tv['value'] && substr($tv['value'],0,1) != '@') {
-                                $output = $tv['value'];
-                                break 2;
+                        while($doc['parent'] != 0) {
+                            $parent_id = $doc['parent'];
+                            if(!$doc = $this->xpdo->getDocument($parent_id, 'id,parent')) {
+                                /* Get unpublished document */
+                                $doc = $this->xpdo->getDocument($parent_id, 'id,parent',0);
                             }
-                        } else {
-                            break;
+                            if ($doc) {
+                                $tv = $this->xpdo->getTemplateVar($this->get('name'), '*', $doc['id']);
+                                if(isset($tv['value']) && $tv['value'] && substr($tv['value'],0,1) != '@') {
+                                    $output = $tv['value'];
+                                    break 2;
+                                }
+                            } else {
+                                break;
+                            }
                         }
+                    } else {
+                        $output = $value;
                     }
                     break;
 

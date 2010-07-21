@@ -271,7 +271,7 @@ class modX extends xPDO {
     public static function sanitize(array &$target, array $patterns= array(), $depth= 3, $nesting= 10) {
         while (list($key, $value)= each($target)) {
             if (is_array($value) && $depth > 0) {
-                modX :: sanitize($value, $patterns, $depth--);
+                modX :: sanitize($value, $patterns, $depth-1);
             } elseif (is_string($value)) {
                 if (!empty($patterns)) {
                     foreach ($patterns as $pattern) {
@@ -2821,7 +2821,7 @@ class modX extends xPDO {
      */
     public function _postProcess() {
         if ($this->getOption('cache_resource', array(), true)) {
-            if (is_object($this->resource) && $this->resource instanceof modResource && $this->resource->get('cacheable')) {
+            if (is_object($this->resource) && $this->resource instanceof modResource && $this->resource->get('id') && $this->resource->get('cacheable')) {
                 $this->invokeEvent('OnBeforeSaveWebPageCache');
                 $this->cacheManager->generateResource($this->resource);
             }

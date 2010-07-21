@@ -2,7 +2,131 @@
 This file shows the changes in recent releases of MODx. The most current release is usually the 
 development release, and is only shown to give an idea of what's currently in the pipeline.
 
-MODx Revolution 2.0.0-rc-3 ($LastChangedRevision$, $LastChangedDate$)
+MODx Revolution 2.0.0-pl ($LastChangedRevision$, $LastChangedDate$)
+====================================
+- [#MODX-2159] Fixed bug where richtext_default was being ignored in Quick Create
+- [#MODX-2174] Fixed bug where manager_language was being ignored in Connectors, check for ctx init
+- [#MODX-1715] Added reference to setting keymap_save to allow for overriding of save shortcut key
+- [#MODX-2008] Updated Russian and Japanese translations
+- [#MODX-2008] Added in Thai translation
+- Fixed typo in filters english lexicon
+- [#MODX-2008] Added in French translation, updated German translation
+- [#MODX-2173] Fixed issue with IE and package installation wizard
+- Fixed setup directory checks for advanced builds
+- Fixed incorrect welcome URL in build
+- [#MODX-2008] Added in Czech translation
+- Configured phpdoc.ini file for SDK build
+- Fixed bug in file tree where URL was absolute rather than relative when being drag/dropped
+- Added OnFileEditFormPrerender event to allow plugins to fire on file editing form
+- [#MODX-2172] Fixed bug where tooltips for stay buttons were behind window
+- Sanity checks to tv render directories
+- Removed deprecated CSS icon reference
+- [#MODX-2169] Fixed bug with TV default values, inheriting and non-linear TV inputs
+- [#MODX-2170] Fixed error where element names cannot have less than 3 characters
+- [#MODX-2169] Properly handled @INHERIT binding in TV inputs
+- [#MODX-2165] Changed 'Remove Package Version' context menu item behavior to allow to show on non-installed versions to allow rollbacks from downloaded but not installed updates
+- [#MODX-2164] Fixed issue that might cause random, non-affecting error during package updates
+- [#MODX-2008] Added in Japanese translation
+- [#MODX-2163] Default settings grid to show only core namespace settings to reduce confusion
+- Added autotag TV input widget that grabs tags from a list of the tags so far for all content values for that TV
+- [#MODX-2161] Added sanity check for incorrect or invalid filemanager_path values in file tree
+- Added missing deleted checkbox on resource panels
+- [#MODX-2167] Fixed issue where duplicate button was creating incorrect duplicate name
+- [#MODX-2162] Fixed issues with set to default in TV values, reliance on processedValue
+- [#MODX-2168] Fixed new user panel issue with missing JS reference
+- [#MODX-2160] Fixed bug where config check was running checkPolicy on resources that caused inadvertent missing unavail/error page message
+- Some query optimizations in processors
+- [#MODX-2159] Ensure richtext_default setting is respected
+- Fixed bug where context settings create modal wasnt resetting values
+- Added missing tabpanel IDs for various tabpanels across mgr ui
+- Fixed bug that was strtolower'ing any strings in tabNew FC rule
+- Added grid renderer to FC grid
+- Tweaks to general UX, other slight cosmetic fixes
+- [#MODX-2156] Fixed unitialized variable in modTemplateVar::renderOutput/renderInput
+- [#MODX-2152] Fixed issue where local package dialog wasnt showing after clicking modxcms.com package browser
+- [#MODX-2154] Fixed issue where publish_document access permission was being ignored in resource processors
+- [#MODX-2149] Fixed issue where Package Management's modal would only once if hidden
+- Fixed issues with stay button on resources
+- [#MODX-2008] Added Swedish translation
+- [#MODX-2148] Fixed image TV thumbnail sizing
+- [#MODX-2145] Fixed 'New' context menu text to be easier to translate
+- Slight tweaks to CSS for MODx.Browser file thumbs
+- [#MODX-2147] Added phpThumb settings for controlling thumbnail output in manager, defaulted zoomcrop to off and force aspect ratio to on, center
+- Fixed erroneous change template message
+- [#MODX-2143] Fixed filemanager_path implementation so that thumbnails and relative URLs in browsing work with absolute and relative paths as setting
+- Removed powered-by text in request headers in AJAX calls
+- [#MODX-2143] Fixed issue where if filemanager_path was set differently that URL insertion on TVs or drag/drop was incorrect
+- Added urlencode/urldecode to filters
+- [#MODX-2132] Remove friendly_url_prefix reference that was causing PHP warnings without breaking makeUrl()
+- [#MODX-2142] Fixed issue where translations in settings, properties and permissions were not being translated or falling back to english
+- [#MODX-2132] Reverting commit in r7125 due to side issue caused by fix in it
+- Hardened security on some file download actions in mgr such as console output, phpinfo, properties export
+- Adjusted setup expiry to 15 minutes
+- [#MODX-2139] Added message to display if setup has to restart due to timeout
+- [#MODX-2140] Fixed welcome page to point to static page rather than atlassian stack
+- Update Help URLs to new base url for docs
+- Some UI tweaks to lexicon grid, added reset() JS method to MODx.Window for shorter code
+- Added in create entry to lexicon management
+- Ensure $modx is available in custom TV renders
+- [#MODX-2137] Fixed bug in image TV output render
+- [#MODX-2138] Fixed textarea bug in system settings
+- Allow MODx tags in TV descriptions in input renders, but prevent HTML tags
+- Fixed bug where output render type was being ignored
+- Ensure tv data isnt sent back in resource update processor, to prevent escaping problems with richtext tvs
+- [#MODX-2109] Fixed setup to have upgrade mode not go to editing database/contexts, only advanced upgrade goes there
+- Fix object caching bug in modAccessibleObject::_loadCollectionInstance()
+- Update xPDO 2.0 to revision 429
+- Ensure extended fields can be added to users with none pre-existing
+- [#MODX-2131] Fixed other issues with TV values and rendering
+- Added ctrl+alt+p key shortcut when updating a Resource to preview it
+- Prevent illegal drops of actions to menus, menus to actions, in trees on Actions page
+- Slight fixes, tweaks to plugin events grid
+- [#MODX-2130] Fixed typos and missing references in mb-based output filters
+- [#MODX-2131] Fixed various issues with TV rendering, values, and in multiple contexts
+- [#MODX-1404] Make MySQL client version check a warning only for older versions
+- [#MODX-1404] Remove MySQL client version check for 5.0.51
+- [#MODX-2024] Fix use of %s strftime modifier in modSessionHandler::write()
+- [#MODX-2132] Remove friendly_url_prefix reference that was causing PHP warnings
+- [#MODX-2107] Fix errors with friendly alias slug generation with certain multi-byte characters
+- [#MODX-2114] Fix Error Caching Resource log message when site unavailable or other transient Resources are constructed
+- [#MODX-2129] Added missing Resource events
+- Fixes to Messages page/grid
+- Added optimize database button on database tables grid
+- Fixed reference bug in resource/update processor
+- Improvements to Users grid to dim inactive users
+- Fixed a few bugs with MODx.Browser and file tree
+- [#MODX-2127] Added message to Package Management if cURL or Sockets is not installed that prompts user to do so
+- Added ability to send warning/error messages to all MODx.* grids/trees
+- [#MODX-2128] Fixed MODx.Browser in RTE mode
+- Added modManagerRequest::addLangTopic,setLangTopics,getLangTopics assistance methods
+- [#MODX-2125] Various fixes for manager log page
+- [#MODX-2023] Added sanity checks for settings caches in setup, ensure settings caches are removed post-setup
+- [#MODX-2064] Ensure Action combos in System Actions page are reloaded when an action is updated/created/removed
+- Fixed invalid validation rule on element classes
+- [#MODX-2091] Ensure duplicate maintains published status
+- [#MODX-2123] Added workaround for IE with Quick Update Resource window
+- Modified validation on modChunk, modPlugin, modSnippet, and modTemplateVar to allow spaces within a name
+- [#MODX-2052] Fixed bug with loading multiple MODx.Browser instances in non-file management circumstances
+- Updated duplicate processors to check validation, return more informative messages, sanity checks
+- Removed duplicate days keys in lexicon
+- Fixed issues when TV render directories are overridden
+- [#MODX-2115] Fixed issue with phpthumb reference and capitalization, and when base_url is /
+- [#MODX-2113] Fixed CTRL+SHIFT+H shortcut for hiding left nav
+- Fixed bug in ORM tree relating to adding root nodes when subnode was selected
+- Added ability to add/remove attributes and containers to UI ORM trees, specifically in User extended and remote data
+- Added UI for editing extended User Profile data
+- [#MODX-2116] Fixed bug in depth search in modX::sanitize
+- [#MODX-1150] Changing class_key for a Resource now reloads the page to change editing area
+- [#MODX-2077] Config check screen in welcome panel now is same width as other panels
+- [#MODX-1648] Lexicon Management now loads by default the current manager_language
+- [#MODX-1743] Package update now shows status alert when package is already up to date, rather than an error
+- [#MODX-2119] Fixed bug in IE where onunload was firing regardless, preventing moving off page seamlessly
+- [#MODX-2112] Fixed bug where admin password reset was not working
+- [#MODX-2111] Fixed bug where language settings were not set after running setup in another language
+- [#MODX-2110] Fixed bug where resource fields were not being updated on update, causing publishedon errors
+- Adjusted version for pl development
+
+MODx Revolution 2.0.0-rc-3 (LastChangedRevision: 7083, LastChangedDate: 2010-07-07 12:20:55 -0500 (Wed, 07 Jul 2010))
 ====================================
 - Updated German translation
 - Fixed bug with new installs and base template name
@@ -1576,7 +1700,6 @@ MODx Revolution 2.0.0-alpha-2 (LastChangedRevision: 3841, LastChangedDate: 2008-
 - Fixed plugin event grid: now can be used via create or update, also properly handles events, does not save until "Save" button is clicked on action bar
 
 MODx 0.9.7-alpha-1 (LastChangedRevision: 3664, LastChangedDate: 2008-04-28 12:43:15 -0500 (Mon, 28 Apr 2008))
-====================================
 - Updated ExtJS from version 2.0 to 2.0.1
 - [Trac#20] When creating new document, make the 'Log Visits' checkbox respect the main configuration setting.
 - [Trac#9] Converted Database Tables tab in System Information to use Ext Grid.

@@ -21,9 +21,16 @@ $dir = !isset($scriptProperties['dir']) || $scriptProperties['dir'] == 'root' ? 
 $dir = $modx->fileHandler->sanitizePath($dir);
 $fullpath = $root.'/'.$dir;
 
+$fileManagerUrl = $modx->getOption('filemanager_path',$scriptProperties,$modx->getOption('rb_base_url',null,''));
+$basePath = $modx->getOption('base_path',null,MODX_BASE_PATH);
+if ($basePath != '/') $fileManagerUrl = str_replace($basePath,'',$fileManagerUrl);
+
 $imagesExts = array('jpg','jpeg','png','gif');
+$use_multibyte = $modx->getOption('use_multibyte',null,false);
+$encoding = $modx->getOption('modx_charset',null,'UTF-8');
 /* iterate */
 $files = array();
+if (!is_dir($fullpath)) return $modx->error->failure($modx->lexicon('file_folder_err_ns'));
 foreach (new DirectoryIterator($fullpath) as $file) {
     if (in_array($file,array('.','..','.svn','_notes'))) continue;
     if (!$file->isReadable()) continue;
@@ -33,14 +40,16 @@ foreach (new DirectoryIterator($fullpath) as $file) {
 
     if (!$file->isDir()) {
         $fileExtension = pathinfo($filePathName,PATHINFO_EXTENSION);
+        $fileExtension = $use_multibyte ? mb_strtolower($fileExtension,$encoding) : strtolower($fileExtension);
 
 	$filesize = @filesize($filePathName);
         /* calculate url */
 	if (!empty($scriptProperties['prependUrl'])) {
-            $url = $scriptProperties['prependUrl'].$dir.'/'.$fileName;
+            $url = $fileManagerUrl.$scriptProperties['prependUrl'].$dir.($dir != '' ? '/' : '').$fileName;
         } else {
-            $url = $modx->getOption('rb_base_url').$dir.'/'.$fileName;
+            $url = $fileManagerUrl.$dir.($dir != '' ? '/' : '').$fileName;
         }
+        $url = str_replace('//','/',$url);
 
         /* get thumbnail */
         if (in_array($fileExtension,$imagesExts)) {
@@ -58,8 +67,8 @@ foreach (new DirectoryIterator($fullpath) as $file) {
             if ($thumbWidth > $imageWidth) $thumbWidth = $imageWidth;
             if ($thumbHeight > $imageHeight) $thumbHeight = $imageHeight;
 
-            $thumb = $modx->getOption('connectors_url',null,MODX_CONNECTORS_URL).'system/phpthumb.php?src='.$url.'&w='.$thumbWidth.'&h='.$thumbHeight.'&zc=1';
-            $image = $modx->getOption('connectors_url',null,MODX_CONNECTORS_URL).'system/phpthumb.php?src='.$url.'&w='.$imageWidth.'&h='.$imageHeight.'&zc=1';
+            $thumb = $modx->getOption('connectors_url',null,MODX_CONNECTORS_URL).'system/phpthumb.php?src='.$url.'&w='.$thumbWidth.'&h='.$thumbHeight;
+            $image = $modx->getOption('connectors_url',null,MODX_CONNECTORS_URL).'system/phpthumb.php?src='.$url.'&w='.$imageWidth.'&h='.$imageHeight;
            
         } else {
             $thumb = $image = $modx->getOption('manager_url').'templates/default/images/restyle/nopreview.jpg';

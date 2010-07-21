@@ -73,6 +73,7 @@ $scriptProperties['searchable'] = empty($scriptProperties['searchable']) ? 0 : 1
 $scriptProperties['syncsite'] = empty($scriptProperties['syncsite']) ? 0 : 1;
 $scriptProperties['createdon'] = strftime('%Y-%m-%d %H:%M:%S');
 $scriptProperties['menuindex'] = empty($scriptProperties['menuindex']) ? 0 : $scriptProperties['menuindex'];
+$scriptProperties['deleted'] = empty($scriptProperties['deleted']) ? 0 : 1;
 
 /* make sure parent exists and user can add_children to the parent */
 $parent = null;
@@ -111,7 +112,7 @@ if (!$resource instanceof $resourceClass) return $modx->error->failure($modx->le
 if ($modx->getOption('friendly_alias_urls')) {
     /* auto assign alias */
     if (empty($scriptProperties['alias']) && $modx->getOption('automatic_alias')) {
-        $scriptProperties['alias'] = strtolower(trim($resource->cleanAlias($scriptProperties['pagetitle'])));
+        $scriptProperties['alias'] = $resource->cleanAlias($scriptProperties['pagetitle']);
     } else {
         $scriptProperties['alias'] = $resource->cleanAlias($scriptProperties['alias']);
     }
@@ -212,7 +213,8 @@ if (!empty($scriptProperties['template']) && ($template = $modx->getObject('modT
         }
 
         /* save value if it was modified */
-        if ($value != $tv->get('default_text')) {
+        $default = $tv->processBindings($tv->get('default_text'),0);
+        if (strcmp($value,$default) != 0) {
             $templateVarResource = $modx->newObject('modTemplateVarResource');
             $templateVarResource->set('tmplvarid',$tv->get('id'));
             $templateVarResource->set('value',$value);
@@ -224,6 +226,8 @@ if (!empty($scriptProperties['template']) && ($template = $modx->getObject('modT
 
 /* deny publishing if not permitted */
 if (!$modx->hasPermission('publish_document')) {
+    $scriptProperties['publishedon'] = 0;
+    $scriptProperties['publishedby'] = 0;
     $scriptProperties['pub_date'] = 0;
     $scriptProperties['unpub_date'] = 0;
     $scriptProperties['published'] = 0;
@@ -263,7 +267,7 @@ $resource->set('menuindex',!empty($menuindex) ? $menuindex : 0);
 
 /* invoke OnBeforeDocFormSave event */
 $modx->invokeEvent('OnBeforeDocFormSave',array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_NEW,
     'id' => 0,
     'resource' => &$resource,
 ));
@@ -319,7 +323,7 @@ if ($resource->get('id') == $modx->getOption('site_start')) {
 
 /* invoke OnDocFormSave event */
 $modx->invokeEvent('OnDocFormSave', array(
-    'mode' => 'new',
+    'mode' => modSystemEvent::MODE_NEW,
     'id' => $resource->get('id'),
     'resource' => &$resource,
 ));

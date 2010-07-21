@@ -245,6 +245,14 @@ MODx.panel.SymLink = function(config) {
         ,checked: true 
     });
     va.push({
+        xtype: 'checkbox'
+        ,fieldLabel: _('deleted')
+        ,name: 'deleted'
+        ,id: 'modx-resource-deleted'
+        ,inputValue: 1
+        ,checked: false
+    });
+    va.push({
         xtype: 'hidden'
         ,name: 'class_key'
         ,id: 'modx-resource-class-key'
@@ -342,7 +350,9 @@ MODx.panel.SymLink = function(config) {
     setTimeout("Ext.getCmp('modx-panel-resource').onLoad();",1000);
 };
 Ext.extend(MODx.panel.SymLink,MODx.FormPanel,{
-    onLoad: function() {
+    initialized: false
+    ,defaultClassKey: 'modResource'
+    ,onLoad: function() {
         this.getForm().setValues(this.config.record);
     }
     ,setup: function() {
@@ -376,7 +386,9 @@ Ext.extend(MODx.panel.SymLink,MODx.FormPanel,{
                         this.rteLoaded = true;
                     }
 
-                    this.fireEvent('ready');
+                    this.defaultClassKey = r.object.class_key;
+                    this.initialized = true;
+                    this.fireEvent('ready',r);
                 } else { MODx.form.Handler.errorJSON(r); }
             }
         });
@@ -405,6 +417,9 @@ Ext.extend(MODx.panel.SymLink,MODx.FormPanel,{
             var n = t.getNodeById(v);
             n.leaf = false;
             t.refreshNode(v,true);
+        }
+        if (o.result.object.class_key != this.defaultClassKey && this.config.resource != '' && this.config.resource != 0) {
+            location.href = location.href;
         }
         Ext.getCmp('modx-page-update-resource').config.preview_url = o.result.object.preview_url;
     }

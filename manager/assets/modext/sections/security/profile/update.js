@@ -87,6 +87,9 @@ MODx.panel.UpdateProfile = function(config) {
         }
         ,layout: 'form'
         ,buttonAlign: 'center'
+        ,bodyStyle: 'padding: 15px;'
+        ,defaults: { border: false ,msgTarget: 'side' }
+        ,labelWidth: 150
         ,items: [{
             xtype: 'textfield'
             ,fieldLabel: _('user_full_name')
@@ -183,11 +186,10 @@ MODx.panel.ChangeProfilePassword = function(config) {
         ,frame: true
         ,layout: 'form'
         ,buttonAlign: 'center'
+        ,bodyStyle: 'padding: 15px;'
+        ,defaults: { border: false ,msgTarget: 'side' }
+        ,labelWidth: 150
         ,items: [{
-            xtype: 'checkbox'
-            ,fieldLabel: _('reset_password')
-            ,name: 'password_reset'
-        },{
             xtype: 'textfield'
             ,fieldLabel: _('password_old')
             ,name: 'password_old'
@@ -214,8 +216,15 @@ MODx.panel.ChangeProfilePassword = function(config) {
             ,scope: this
             ,handler: this.submit
         }]
+        ,listeners: {
+            'success': {fn:this.success,scope:this}
+        }
     });
     MODx.panel.ChangeProfilePassword.superclass.constructor.call(this,config);
 };
-Ext.extend(MODx.panel.ChangeProfilePassword,MODx.FormPanel);
+Ext.extend(MODx.panel.ChangeProfilePassword,MODx.FormPanel,{
+    success: function(o) {
+        MODx.msg.alert(_('success'),o.result.message);
+    }
+});
 Ext.reg('modx-panel-profile-password-change',MODx.panel.ChangeProfilePassword);

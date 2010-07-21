@@ -49,6 +49,13 @@ $editAction = false;
 $act = $modx->getObject('modAction',array('controller' => 'system/file/edit'));
 if ($act) { $editAction = $act->get('id'); }
 
+$fileManagerUrl = $modx->getOption('filemanager_path',$scriptProperties,$modx->getOption('rb_base_url',null,''));
+$basePath = $modx->getOption('base_path',null,MODX_BASE_PATH);
+if ($basePath != '/') $fileManagerUrl = str_replace($basePath,'',$fileManagerUrl);
+
+if (!is_dir($fullpath)) return $modx->error->failure($modx->lexicon('file_folder_err_ns'));
+$use_multibyte = $modx->getOption('use_multibyte',null,false);
+$encoding = $modx->getOption('modx_charset',null,'UTF-8');
 
 /* iterate through directories */
 foreach (new DirectoryIterator($fullpath) as $file) {
@@ -81,6 +88,7 @@ foreach (new DirectoryIterator($fullpath) as $file) {
     /* get files in current dir */
     if ($file->isFile() && !$hideFiles && $canListFiles) {
         $ext = pathinfo($filePathName,PATHINFO_EXTENSION);
+        $ext = $use_multibyte ? mb_strtolower($ext,$encoding) : strtolower($ext);
 
         $cls = 'icon-file icon-'.$ext;
         if ($canRemoveFile) $cls .= ' premove';
@@ -95,6 +103,7 @@ foreach (new DirectoryIterator($fullpath) as $file) {
             'page' => !empty($editAction) ? '?a='.$editAction.'&file='.$encFile : null,
             'perms' => $octalPerms,
             'path' => $relativeRootPath.$fileName,
+            'url' => ltrim(str_replace('//','/',$fileManagerUrl.$dir.$fileName),'/'),
             'file' => $encFile,
         );
     }

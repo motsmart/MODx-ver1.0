@@ -12,7 +12,7 @@
  * @subpackage processors.element.tv.renders
  */
 if (!$modx->hasPermission('view_tv')) return $modx->error->failure($modx->lexicon('permission_denied'));
-$modx->lexicon->load('tv_widget');
+$modx->lexicon->load('tv_widget','tv_input_types');
 
 $context = (isset($scriptProperties['context']) && !empty($scriptProperties['context'])) ? $scriptProperties['context'] : $modx->context->get('key');
 if (!isset($scriptProperties['type'])) $scriptProperties['type'] = 'default';
@@ -58,7 +58,7 @@ if (!empty($pluginResult)) {
 /* get controller */
 $o = '';
 foreach ($renderDirectories as $renderDirectory) {
-    if (empty($renderDirectory)) continue;
+    if (empty($renderDirectory) || !is_dir($renderDirectory)) continue;
     
     $renderFile = $renderDirectory.$scriptProperties['type'].'.php';
     if (file_exists($renderFile)) {

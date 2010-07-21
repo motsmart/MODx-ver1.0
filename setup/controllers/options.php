@@ -2,6 +2,7 @@
 /**
  * @package setup
  */
+$install->settings->check();
 $default_folder_permissions = sprintf("%04o", 0777 & (0777 - umask()));
 $default_file_permissions = sprintf("%04o", 0666 & (0666 - umask()));
 
@@ -25,9 +26,17 @@ if (!empty($_POST['proceed'])) {
 
     /* then store in cache */
     $install->settings->store($settings);
-    $this->proceed('database');
+
+    $installmode = $install->settings->get('installmode');
+    if (in_array($installmode,array(modInstall::MODE_UPGRADE_REVO_ADVANCED,modInstall::MODE_NEW))) {
+        $this->proceed('database');
+    } else {
+        $this->proceed('summary');
+    }
+    
 }
-$this->parser->assign('installmode',$install->getInstallMode());
+$installmode = $install->settings->get('installmode',$install->getInstallMode());
+$this->parser->assign('installmode',$installmode);
 
 $files_exist= 0;
 if (file_exists(MODX_INSTALL_PATH . 'manager/index.php') &&

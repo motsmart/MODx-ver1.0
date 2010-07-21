@@ -16,6 +16,7 @@ MODx.grid.Lexicon = function(config) {
             action: 'getList'
             ,'namespace': 'core'
             ,topic: ''
+            ,language: MODx.config.manager_language || 'en'
         }
         ,width: '98%'
         ,paging: true
@@ -68,7 +69,7 @@ MODx.grid.Lexicon = function(config) {
             ,name: 'language'
             ,id: 'modx-lexicon-filter-language'
             ,itemId: 'language'
-            ,value: 'en'
+            ,value: MODx.config.manager_language || 'en'
             ,width: 100
             ,listeners: {
                 'select': {fn:this.changeLanguage,scope:this}
@@ -76,6 +77,11 @@ MODx.grid.Lexicon = function(config) {
         }
         ,'->'
         ,{
+            xtype: 'button'
+            ,text: _('entry_create')
+            ,handler: this.createEntry
+            ,scope: this
+        },'-',{
             xtype: 'textfield'
             ,name: 'name'
             ,id: 'modx-lexicon-filter-search'
@@ -141,7 +147,7 @@ MODx.grid.Lexicon = function(config) {
                     xtype: 'modx-window-lexicon-export'
                     ,listeners: {
                         'success': {fn:function(o) {
-                            location.href = MODx.config.connectors_url+'workspace/lexicon/index.php?action=export&download='+o.a.result.message;
+                            location.href = MODx.config.connectors_url+'workspace/lexicon/index.php?action=export&HTTP_MODAUTH='+MODx.siteId+'&download='+o.a.result.message;
                         },scope:this}
                         ,'show': {fn:function() {
                             var w = this.windows['modx-window-lexicon-export'];
@@ -336,6 +342,30 @@ Ext.extend(MODx.grid.Lexicon,MODx.grid.Grid,{
             this.menu.show(e.target);
         }
     }
+
+    ,createEntry: function(btn,e) {
+        var r = this.menu.record || {};
+
+        var tb = this.getTopToolbar();
+    	r['namespace'] = tb.getComponent('namespace').getValue();
+        r.language =  tb.getComponent('language').getValue();
+        r.topic = tb.getComponent('topic').getValue();
+        
+        if (!this.createEntryWindow) {
+            this.createEntryWindow = MODx.load({
+                xtype: 'modx-window-lexicon-entry-create'
+                ,record: r
+                ,listeners: {
+                    'success':{fn:function(o) {
+                        this.refresh();
+                    },scope:this}
+                }
+            });
+        }
+        this.createEntryWindow.reset();
+        this.createEntryWindow.setValues(r);
+        this.createEntryWindow.show(e.target);
+    }
 });
 Ext.reg('modx-grid-lexicon',MODx.grid.Lexicon);
 
@@ -397,3 +427,63 @@ MODx.window.ExportLexicon = function(config) {
 };
 Ext.extend(MODx.window.ExportLexicon,MODx.Window);
 Ext.reg('modx-window-lexicon-export',MODx.window.ExportLexicon);
+
+
+
+MODx.window.LexiconEntryCreate = function(config) {
+    config = config || {};
+    this.ident = config.ident || 'lexentc'+Ext.id();
+    var r = config.record;
+    Ext.applyIf(config,{
+        title: _('entry_create')
+        ,url: MODx.config.connectors_url+'workspace/lexicon/index.php'
+        ,action: 'create'
+        ,fileUpload: true
+        ,fields: [{
+            xtype: 'textfield'
+            ,fieldLabel: _('name')
+            ,id: 'modx-'+this.ident+'-name'
+            ,itemId: 'name'
+            ,name: 'name'
+            ,width: 300
+        },{
+            xtype: 'modx-combo-namespace'
+            ,fieldLabel: _('namespace')
+            ,name: 'namespace'
+            ,id: 'modx-'+this.ident+'-namespace'
+            ,itemId: 'namespace'
+            ,listeners: {
+                'select': {fn: function(cb,r,i) {
+                    cle = this.fp.getComponent('topic');
+                    if (cle) {
+                        cle.store.baseParams['namespace'] = cb.getValue();
+                        cle.setValue('');
+                        cle.store.reload();
+                    } else {console.log('cle not found');}
+                },scope:this}
+            }
+        },{
+            xtype: 'modx-combo-lexicon-topic'
+            ,fieldLabel: _('topic')
+            ,name: 'topic'
+            ,id: 'modx-'+this.ident+'-topic'
+            ,itemId: 'topic'
+        },{
+            xtype: 'modx-combo-language'
+            ,fieldLabel: _('language')
+            ,name: 'language'
+            ,id: 'modx-'+this.ident+'-language'
+            ,itemId: 'language'
+        },{
+            xtype: 'textarea'
+            ,fieldLabel: _('value')
+            ,id: 'modx-'+this.ident+'-value'
+            ,itemId: 'value'
+            ,name: 'value'
+            ,width: 300
+        }]
+    });
+    MODx.window.LexiconEntryCreate.superclass.constructor.call(this,config);
+};
+Ext.extend(MODx.window.LexiconEntryCreate,MODx.Window);
+Ext.reg('modx-window-lexicon-entry-create',MODx.window.LexiconEntryCreate);

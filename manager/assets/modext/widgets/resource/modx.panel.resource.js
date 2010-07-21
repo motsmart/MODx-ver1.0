@@ -225,7 +225,7 @@ MODx.panel.Resource = function(config) {
         ,name: 'richtext'
         ,id: 'modx-resource-richtext'
         ,inputValue: 1
-        ,checked: true
+        ,checked: MODx.config.richtext_default == '1' ? true : false
         
     },{
         xtype: 'xdatetime'
@@ -295,6 +295,14 @@ MODx.panel.Resource = function(config) {
         ,inputValue: 1
         ,checked: true
         
+    },{
+        xtype: 'checkbox'
+        ,fieldLabel: _('deleted')
+        ,name: 'deleted'
+        ,id: 'modx-resource-deleted'
+        ,inputValue: 1
+        ,checked: false
+
     },{
         xtype: 'modx-combo-content-type'
         ,fieldLabel: _('resource_content_type')
@@ -417,6 +425,7 @@ MODx.panel.Resource = function(config) {
 Ext.extend(MODx.panel.Resource,MODx.FormPanel,{
     rteLoaded: false
     ,initialized: false
+    ,defaultClassKey: 'modResource'
     ,onLoad: function() {
         this.getForm().setValues(this.config.record);
     }
@@ -464,6 +473,7 @@ Ext.extend(MODx.panel.Resource,MODx.FormPanel,{
                         }
                         this.rteLoaded = false;
                     }
+                    this.defaultClassKey = r.object.class_key;
                     this.initialized = true;
                     this.fireEvent('ready',r);
                 },scope:this}
@@ -489,13 +499,15 @@ Ext.extend(MODx.panel.Resource,MODx.FormPanel,{
         this.cleanupEditor();
         return this.fireEvent('save',{
             values: this.getForm().getValues()
-            ,stay: MODx.config.stay
+            ,stay: Ext.state.Manager.get('modx.stay.'+MODx.request.a,'stay')
         });
     }
     ,success: function(o) {
         var g = Ext.getCmp('modx-grid-resource-security');
         if (g) { g.getStore().commitChanges(); }
         var t = Ext.getCmp('modx-resource-tree');
+
+        this.getForm().setValues(o.result.object);
         if (t) {
             var ctx = Ext.getCmp('modx-resource-context-key').getValue();
             var pa = Ext.getCmp('modx-resource-parent-hidden').getValue();
@@ -503,6 +515,9 @@ Ext.extend(MODx.panel.Resource,MODx.FormPanel,{
             var n = t.getNodeById(v);
             n.leaf = false;
             t.refreshNode(v,true);
+        }
+        if (o.result.object.class_key != this.defaultClassKey && this.config.resource != '' && this.config.resource != 0) {
+            location.href = location.href;
         }
         Ext.getCmp('modx-page-update-resource').config.preview_url = o.result.object.preview_url;
     }

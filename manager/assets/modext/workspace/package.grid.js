@@ -55,7 +55,7 @@ MODx.grid.Package = function(config) {
         ,autosave: true
         ,tbar: [{
             text: _('package_add')
-            ,handler: { xtype: 'modx-window-package-downloader' }
+            ,handler: this.loadPackageDownloader
         },{
             text: _('download_extras')
             ,handler: this.loadMainProvider
@@ -74,9 +74,22 @@ MODx.grid.Package = function(config) {
         }]
     });
     MODx.grid.Package.superclass.constructor.call(this,config);
+    this.on('render',function() {
+        this.getView().mainBody.update('<div class="x-grid-empty">' + _('loading') + '</div>');
+    },this);
 };
 Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
     console: null
+
+    ,loadPackageDownloader: function(btn,e) {
+        var x = 'modx-window-package-downloader';
+        if (!this.windows[x]) {
+            this.windows[x] = MODx.load({ xtype: x });
+        }
+        this.windows[x].config.firstPanel = 'modx-pd-start';
+        this.windows[x].config.showFirstPanel = true;
+        this.windows[x].show(e.target);
+    }
     
     ,loadMainProvider: function(btn,e) {
         MODx.Ajax.request({
@@ -96,31 +109,30 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
                             ,showFirstPanel: false
                         });
                     }
-                    this.windows[x].on('ready',function() {
-
+                    this.windows[x].show(e.target,function() {
                         var pd = Ext.getCmp('modx-window-package-downloader');
                         pd.fireEvent('proceed','modx-pd-selpackage');
-                        
+
                         Ext.getCmp('modx-package-browser-thumb-view').hide();
                         Ext.getCmp('modx-package-browser-grid-panel').hide();
                         Ext.getCmp('modx-package-browser-view').show();
-                        
+
                         var t = Ext.getCmp('modx-package-browser-tree');
                         if (t) {
-                            t.getLoader().baseParams.provider = p.id;
+                            t.getLoader().baseParams.provider = MODx.provider;
                             t.refresh();
                             t.renderProviderInfo();
                             t.getRootNode().setText(p.name);
                         }
                         var g = Ext.getCmp('modx-package-browser-grid');
                         if (g) {
-                            g.getStore().baseParams.provider = p.id;
+                            g.getStore().baseParams.provider = MODx.provider;
                             g.getStore().removeAll();
                         }
-                        
+
                         var v = Ext.getCmp('modx-package-browser-thumbs-view');
                         if (v) {
-                            v.baseParams.provider = p.id;
+                            v.baseParams.provider = MODx.provider;
                         }
                         pd.syncSize();
                         pd.doLayout();
@@ -133,10 +145,13 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
                                 tb.getComponent('btn-back').setDisabled(true);
                             }
                         }
-
-                    },this,{single:true});
-                    
-                    this.windows[x].show(e.target);
+                        try {
+                            var xy = pd.el.getAlignToXY(pd.container, 'c-c');
+                            if (xy) {
+                                pd.setPagePosition(xy[0],0);
+                            }
+                        } catch (e) {}
+                    },this);
                 },scope:this}
             }
         });
@@ -168,6 +183,12 @@ Ext.extend(MODx.grid.Package,MODx.grid.Grid,{
                             },scope:this}
                         }
                     });
+                },scope:this}
+                ,'failure': {fn: function(r) {
+                    MODx.msg.alert(_('package_update'),_('package_err_uptodate',{
+                        signature: this.menu.record.signature
+                    }));
+                    return false;
                 },scope:this}
             }
         });

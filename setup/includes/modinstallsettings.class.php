@@ -30,16 +30,25 @@ class modInstallSettings {
         if (file_exists($this->fileName)) {
             $this->settings = include $this->fileName;
             if (empty($this->settings)) {
-                $this->erase();
-                header('Location: ' . MODX_SETUP_URL);
-                exit();
+                $this->restart();
             }
         }
+    }
+    public function check() {
+        $this->load();
+        if (empty($this->settings)) {
+            $this->restart();
+        }
+    }
+    public function restart() {
+        $this->erase();
+        header('Location: ' . MODX_SETUP_URL.'?restarted=1');
+        exit();
     }
     public function delete($k) {
         unset($this->settings[$k]);
     }
-    public function store(array $settings = array(),$expire = 600) {
+    public function store(array $settings = array(),$expire = 900) {
         $this->settings = array_merge($this->settings,$settings);
         $written = false;
 

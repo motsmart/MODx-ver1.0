@@ -14,12 +14,10 @@ MODx.Layout = function(config){
     config = config || {};
     Ext.BLANK_IMAGE_URL = MODx.config.manager_url+'assets/ext3/resources/images/default/s.gif';
     Ext.Ajax.defaultHeaders = {
-        'Powered-By': 'MODx'
-        ,'modAuth': config.auth
+        'modAuth': config.auth
     };
     Ext.Ajax.extraParams = {
-        'Powered-By': 'MODx'
-        ,'HTTP_MODAUTH': config.auth
+        'HTTP_MODAUTH': config.auth
     };
     MODx.siteId = config.auth;
 
@@ -156,20 +154,10 @@ Ext.extend(MODx.Layout,Ext.Viewport,{
         this.leftbarVisible = !this.leftbarVisible;
     }
     ,hideLeftbar: function(d) {
-        this.cleanupContent(false);
-        Ext.get('modx-leftbar').slideOut('l',{
-            remove: false
-            ,useDisplay: true
-            ,duration: d || .1
-        });
+        Ext.getCmp('modx-leftbar-tabs').collapse();
     }
     ,showLeftbar: function(d) {
-        this.cleanupContent(true);
-        Ext.get('modx-leftbar').slideIn('l',{
-            remove: false
-            ,useDisplay: true
-            ,duration: d || .1
-        });
+        Ext.getCmp('modx-leftbar-tabs').expand();
     }
 });
 Ext.reg('modx-layout',MODx.Layout);

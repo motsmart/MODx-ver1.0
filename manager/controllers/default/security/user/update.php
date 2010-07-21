@@ -16,10 +16,10 @@ if ($user == null) return $modx->error->failure($modx->lexicon('user_err_nf'));
 $remoteFields = array();
 $remoteData = $user->get('remote_data');
 if (!empty($remoteData)) {
-    $remoteFields = parseRemoteData($remoteData);
+    $remoteFields = parseCustomData($remoteData);
 }
 
-function parseRemoteData(array $remoteData = array()) {
+function parseCustomData(array $remoteData = array()) {
     $fields = array();
     foreach ($remoteData as $key => $value) {
         $field = array(
@@ -29,7 +29,7 @@ function parseRemoteData(array $remoteData = array()) {
         if (is_array($value)) {
             $field['text'] = $key;
             $field['leaf'] = false;
-            $field['children'] = parseRemoteData($value);
+            $field['children'] = parseCustomData($value);
         } else {
             $v = $value;
             if (strlen($v) > 30) { $v = substr($v,0,30).'...'; }
@@ -42,32 +42,32 @@ function parseRemoteData(array $remoteData = array()) {
     return $fields;
 }
 
+/* parse extended data, if existent */
+$user->getOne('Profile');
+if ($user->Profile) {
+    $extendedFields = array();
+    $extendedData = $user->Profile->get('extended');
+    if (!empty($extendedData)) {
+        $extendedFields = parseCustomData($extendedData);
+    }
+}
+
 /* invoke OnUserFormPrerender event */
 $onUserFormPrerender = $modx->invokeEvent('OnUserFormPrerender', array(
     'id' => $user->get('id'),
     'user' => &$user,
-    'mode' => 'upd',
+    'mode' => modSystemEvent::MODE_UPD,
 ));
 if (is_array($onUserFormPrerender)) {
 	$onUserFormPrerender = implode('',$onUserFormPrerender);
 }
 $modx->smarty->assign('onUserFormPrerender',$onUserFormPrerender);
 
-/* invoke onInterfaceSettingsRender event */
-$onInterfaceSettingsRender = $modx->invokeEvent('OnInterfaceSettingsRender', array(
-    'id' => $user->get('id'),
-    'user' => &$user,
-    'mode' => 'upd',
-));
-if (is_array($onInterfaceSettingsRender)) {
-	$onInterfaceSettingsRender = implode('', $onInterfaceSettingsRender);
-}
-$modx->smarty->assign('onInterfaceSettingsRender',$onInterfaceSettingsRender);
-
 /* invoke OnUserFormRender event */
 $onUserFormRender = $modx->invokeEvent('OnUserFormRender', array(
-    'id' => 0,
-    'mode' => 'new',
+    'id' => $user->get('id'),
+    'user' => &$user,
+    'mode' => modSystemEvent::MODE_UPD,
 ));
 if (is_array($onUserFormRender)) $onUserFormRender = implode('',$onUserFormRender);
 $onUserFormRender = str_replace(array('"',"\n","\r"),array('\"','',''),$onUserFormRender);
@@ -92,6 +92,7 @@ Ext.onReady(function() {
         xtype: "modx-page-user-update"
         ,user: "'.$user->get('id').'"
         '.(!empty($remoteFields) ? ',remoteFields: '.$modx->toJSON($remoteFields) : '').'
+        '.(!empty($extendedFields) ? ',extendedFields: '.$modx->toJSON($extendedFields) : '').'
     });
 });
 // ]]>

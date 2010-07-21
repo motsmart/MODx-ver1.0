@@ -2,6 +2,10 @@ MODx.Wizard = function(config) {
     config = config || {};
     Ext.applyIf(config,{
         layout: 'card'
+        ,layoutConfig: {
+            layoutOnCardChange: true
+            ,deferredRender: false
+        }
         ,activeItem: 0
         ,closeAction: 'hide'
         ,resizable: true
@@ -12,6 +16,7 @@ MODx.Wizard = function(config) {
         ,width: '90%'
         ,defaults: { border: false }
         ,modal: Ext.isIE ? false : true
+        ,hideMode: 'offsets'
         ,cls: 'modx-window'
         ,bbar: [{
             itemId: 'btn-back'
@@ -92,9 +97,11 @@ Ext.extend(MODx.Wizard,Ext.Window,{
             tb.getComponent('btn-back').setDisabled(false);
             tb.getComponent('btn-next').setText(_('next'));
         }
-        if (!Ext.isIE && Ext.getCmp(panel).fireEvent('fetch')) {
-            this.syncSize();
-            this.center();
+        if (Ext.getCmp(panel).fireEvent('fetch')) {
+            if (!Ext.isIE) {
+                this.syncSize();
+                this.center();
+            }
         }
         return true;
     }

@@ -19,7 +19,7 @@ MODx.page.UpdateUser = function(config) {
             process: 'update', text: _('save'), method: 'remote'
             ,checkDirty: true
             ,keys: [{
-                key: 's'
+                key: MODx.config.keymap_save || 's'
                 ,alt: true
                 ,ctrl: true
             }]
@@ -34,6 +34,7 @@ MODx.page.UpdateUser = function(config) {
             ,renderTo: 'modx-panel-user-div'
             ,user: config.user
             ,remoteFields: config.remoteFields
+            ,extendedFields: config.extendedFields
             ,name: ''
         }]
 	});

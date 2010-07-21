@@ -38,11 +38,21 @@ MODx.page.UpdateResource = function(config) {
         ,buttons: this.getButtons(config)
     });
     MODx.page.UpdateResource.superclass.constructor.call(this,config);
-    Ext.EventManager.on(window, 'beforeunload',function(e) {
-        MODx.releaseLock(this.config.resource);
-        MODx.sleep(400);
-        e.browserEvent.returnValue = '';
-    }, this);
+    if (!Ext.isIE) {
+        Ext.EventManager.on(window, 'beforeunload',function(e) {
+            MODx.releaseLock(this.config.resource);
+            MODx.sleep(400);
+            e.browserEvent.returnValue = '';
+            return false;
+        }, this);
+    }
+    new Ext.KeyMap(Ext.getBody(), {
+        key: 'p'
+        ,alt: true
+        ,ctrl: true
+        ,fn: this.preview
+        ,scope: this
+    });
 };
 Ext.extend(MODx.page.UpdateResource,MODx.Component,{
     preview: function() {
@@ -90,7 +100,7 @@ Ext.extend(MODx.page.UpdateResource,MODx.Component,{
                 ,method: 'remote'
                 ,checkDirty: cfg.richtext ? false : true
                 ,keys: [{
-                    key: 's'
+                    key: MODx.config.keymap_save || 's'
                     ,alt: true
                     ,ctrl: true
                 }]

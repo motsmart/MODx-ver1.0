@@ -204,8 +204,38 @@ $_lang['setting_filemanager_path_desc'] = 'IIS often does not populate the docum
 $_lang['setting_filemanager_path_err'] = 'Please state the absoulte document root path for the filemanager.';
 $_lang['setting_filemanager_path_err_invalid'] = 'This filemanager directory either does not exist or cannot be accessed. Please state a valid directory or adjust the permissions of this directory.';
 
+$_lang['setting_friendly_alias_lowercase_only'] = 'FURL Lowercase Aliases';
+$_lang['setting_friendly_alias_lowercase_only_desc'] = 'Determines whether to allow only lowercase characters in a Resource alias.';
+
+$_lang['setting_friendly_alias_max_length'] = 'FURL Alias Maximum Length';
+$_lang['setting_friendly_alias_max_length_desc'] = 'If greater than zero, the maximum number of characters to allow in a Resource alias. Zero equals unlimited.';
+
+$_lang['setting_friendly_alias_restrict_chars'] = 'FURL Alias Character Restriction Method';
+$_lang['setting_friendly_alias_restrict_chars_desc'] = 'The method used to restrict characters used in a Resource alias. "pattern" allows a RegEx pattern to be provided, "legal" allows any legal URL characters, "alpha" allows only letters of the alphabet, and "alphanumeric" allows only letters and numbers.';
+
+$_lang['setting_friendly_alias_restrict_chars_pattern'] = 'FURL Alias Character Restriction Pattern';
+$_lang['setting_friendly_alias_restrict_chars_pattern_desc'] = 'A valid RegEx pattern for restricting characters used in a Resource alias.';
+
+$_lang['setting_friendly_alias_strip_element_tags'] = 'FURL Alias Strip Element Tags';
+$_lang['setting_friendly_alias_strip_element_tags_desc'] = 'Determines if Element tags should be stripped from a Resource alias.';
+
+$_lang['setting_friendly_alias_translit'] = 'FURL Alias Transliteration';
+$_lang['setting_friendly_alias_translit_desc'] = 'The method of transliteration to use on an alias specified for a Resource. Empty or "none" is the default which skips transliteration. Other possible values are "iconv" (if available) or a named transliteration table provided by a custom transliteration service class.';
+
+$_lang['setting_friendly_alias_translit_class'] = 'FURL Alias Transliteration Service Class';
+$_lang['setting_friendly_alias_translit_class_desc'] = 'An optional service class to provide named transliteration services for FURL Alias generation/filtering.';
+
+$_lang['setting_friendly_alias_trim_chars'] = 'FURL Alias Trim Characters';
+$_lang['setting_friendly_alias_trim_chars_desc'] = 'Characters to trim from the ends of a provided Resource alias.';
+
 $_lang['setting_friendly_alias_urls'] = 'Use Friendly Aliases';
 $_lang['setting_friendly_alias_urls_desc'] = 'If you are using friendly URLs, and the resource has an alias, the alias will always have precedence over the friendly URL. By setting this option to \'Yes\', the Content Type suffix of the Resource will also be applied to the alias. For example, if your Resource with ID 1 has an alias of `introduction`, and you\'ve set a Content Type suffix of `.html`, setting this option to `yes` will generate `introduction.html`. If there\'s no alias, MODx will generate `1.html` as link.';
+
+$_lang['setting_friendly_alias_word_delimiter'] = 'FURL Alias Word Delimiter';
+$_lang['setting_friendly_alias_word_delimiter_desc'] = 'The preferred word delimiter for friendly URL alias slugs.';
+
+$_lang['setting_friendly_alias_word_delimiters'] = 'FURL Alias Word Delimiters';
+$_lang['setting_friendly_alias_word_delimiters_desc'] = 'Characters which represent word delimiters when processing friendly URL alias slugs. These characters will be converted and consolidated to the preferred FURL alias word delimiter.';
 
 $_lang['setting_friendly_urls'] = 'Use Friendly URLs';
 $_lang['setting_friendly_urls_desc'] = 'This allows you to use search engine friendly URLs with MODx. Please note, this only works for MODx installations running on Apache, and you\'ll need to write a .htaccess file for this to work. See the .htaccess file included in the distribution for more info.';
@@ -278,7 +308,7 @@ $_lang['setting_modRequest.class'] = 'Request Handler Class';
 $_lang['setting_modRequest.class_desc'] = '';
 
 $_lang['setting_modx_charset'] = 'Character encoding';
-$_lang['setting_modx_charset_desc'] = 'Please select which character encoding you wish to use in the manager. Please note that MODx has been tested with a number of these encodings, but not all of them. For most languages, the default setting of UTF-8 is preferrable.';
+$_lang['setting_modx_charset_desc'] = 'Please select which character encoding you wish to use. Please note that MODx has been tested with a number of these encodings, but not all of them. For most languages, the default setting of UTF-8 is preferrable.';
 
 $_lang['setting_new_file_permissions'] = 'New File Permissions';
 $_lang['setting_new_file_permissions_desc'] = 'When uploading a new file in the File Manager, the File Manager will attempt to change the file permissions to those entered in this setting. This may not work on some setups, such as IIS, in which case you will need to manually change the permissions.';
@@ -318,6 +348,12 @@ $_lang['setting_phpthumb_cache_maxfiles_desc'] = 'Delete least-recently-accessed
 
 $_lang['setting_phpthumb_cache_source_enabled'] = 'phpThumb Cache Source Files';
 $_lang['setting_phpthumb_cache_source_enabled_desc'] = 'Whether or not to cache source files as they are loaded. Recommended to off.';
+
+$_lang['setting_phpthumb_zoomcrop'] = 'phpThumb Zoom-Crop';
+$_lang['setting_phpthumb_zoomcrop_desc'] = 'The default zc setting for phpThumb when used in MODx. Defaults to 0 to prevent zoom cropping.';
+
+$_lang['setting_phpthumb_far'] = 'phpThumb Force Aspect Ratio';
+$_lang['setting_phpthumb_far_desc'] = 'The default far setting for phpThumb when used in MODx. Defaults to C to force aspect ratio toward the center.';
 
 $_lang['setting_publish_default'] = 'Published default';
 $_lang['setting_publish_default_desc'] = 'Select \'Yes\' to make all new resources published by default.';
